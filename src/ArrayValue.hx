@@ -8,6 +8,8 @@ class ArrayValue<T> extends ValueBase {
 		this.array = [];
 	}
 
+	public inline function get(index:Int):T return array[index];
+
 	public function push(value:T):Int {
 		var result = array.push(value);
 		if (helper != null)
@@ -31,10 +33,9 @@ class ArrayValue<T> extends ValueBase {
 		return value;
 	}
 
-	static function __fromRawValue<T>(raw:RawValue, ?converter:RawValueConverter<T> /* TODO: this is actually mandatory */):ArrayValue<T> {
-		var rawArray:Array<RawValue> = raw;
+	static function __fromRawValue<T>(raw:RawValue, converter:RawValueConverter<T>):ArrayValue<T> {
 		var instance = new ArrayValue();
-		for (value in rawArray)
+		for (value in (raw : Array<RawValue>))
 			instance.array.push(if (converter != null) converter.fromRawValue(value) else value);
 		return instance;
 	}

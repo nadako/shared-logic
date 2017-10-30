@@ -1,6 +1,11 @@
+class SomeEntry extends Value {
+	var value:String;
+	public function new() {}
+}
+
 class GameData extends Value {
 	public var player:Player;
-	public var items:ArrayValue<Int>;
+	public var items:ArrayValue<SomeEntry>;
 
 	public function new() {}
 
@@ -39,7 +44,7 @@ class Main {
 					gold: 1000
 				}
 			},
-			items: [1,2,3]
+			items: [{value: "foo"}, {value: "bar"}]
 		};
 
 		var data = GameData.fromRawValue(raw);
@@ -52,9 +57,7 @@ class Main {
 
 		data.player.name = "John";
 		data.player.resources.gold = 100;
-		data.items.push(4);
-		data.items.push(5);
-		data.items.pop();
+		trace(data.items.get(0));
 
 		trace(haxe.Json.stringify(dbChanges.commit(), "  "));
 	}

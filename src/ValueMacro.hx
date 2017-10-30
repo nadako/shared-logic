@@ -49,7 +49,7 @@ class ValueMacro {
 					var toRawExpr = helper.toRaw(macro this.$fieldName, rawValueExpr -> macro raw.$fieldName = $rawValueExpr, () -> macro {});
 					toRawExprs.push(toRawExpr);
 
-					var fromRawExpr = helper.fromRaw(macro raw, macro instance, fieldName);
+					var fromRawExpr = helper.fromRaw(macro raw, macro instance, fieldName, field.pos);
 					fromRawExprs.push(fromRawExpr);
 
 					var dbChangeExpr = helper.toRaw(
@@ -143,9 +143,12 @@ class ValueMacro {
 				})
 			});
 
-			var rawValueConverterName = thisTP.sub + "__RawValueConverter";
+			var rawValueConverterName = getRawValueConverterName(thisTP.sub);
+			var rawValueConverterTP = {pack: thisTP.pack, name: rawValueConverterName};
 			var rawValueConverterTD = macro class $rawValueConverterName implements RawValueConverter<$thisCT> {
-				public inline function new() {}
+				inline function new() {}
+				static var instance = new $rawValueConverterTP();
+				public static inline function get() return instance;
 				public inline function fromRawValue(raw) return @:privateAccess $thisTypeExpr.__fromRawValue(raw);
 			};
 			rawValueConverterTD.pack = thisTP.pack;
@@ -154,6 +157,8 @@ class ValueMacro {
 
 		return fields.concat(newFields);
 	}
+
+	public static inline function getRawValueConverterName(name:String) return name + "__RawValueConverter";
 
 	public static function getTypePath(t:BaseType):TypePath {
 		var module = t.module.split(".").pop();
@@ -178,7 +183,7 @@ private class HelperGenerator {
 					case [{pack: [], name: "String"}, _]:
 						return new BasicTypeHelperInfo(true);
 					case _ if (isValueClass(cl)):
-						return new ValueClassHelperInfo(cl);
+						return new ValueClassHelperInfo(this, cl, params);
 					case _:
 				}
 
@@ -213,11 +218,12 @@ private class HelperGenerator {
 
 private interface HelperInfo {
 	function helperExpr():Expr;
+	function rawValueConverterExpr():Expr;
 	function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr):Expr;
 	function unlink(valueExpr:Expr):Expr;
 	function setup(valueExpr:Expr, transactionExpr:Expr, dbChangesExpr:Expr):Null<Expr>;
 	function toRaw(valueExpr:Expr, callback:Expr->Expr, noValueCallback:()->Expr):Expr;
-	function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String):Expr;
+	function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String, pos:Position):Expr;
 }
 
 private class BasicTypeHelperInfo implements HelperInfo {
@@ -226,6 +232,7 @@ private class BasicTypeHelperInfo implements HelperInfo {
 	public function new(nullable) this.nullable = nullable;
 
 	public function helperExpr():Expr return macro null;
+	public function rawValueConverterExpr():Expr return macro null;
 	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr):Expr return macro {};
 	public function unlink(valueExpr:Expr):Expr return macro {};
 	public function setup(valueExpr:Expr, transactionExpr:Expr, dbChangesExpr:Expr):Null<Expr> return null;
@@ -238,21 +245,31 @@ private class BasicTypeHelperInfo implements HelperInfo {
 		}
 	}
 
-	public function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String):Expr {
+	public function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String, pos:Position):Expr {
 		// TODO: handle weird JS fields like `constructor`
-		return macro $instanceExpr.$fieldName = $rawExpr.fieldName;
+		return macro $instanceExpr.$fieldName = $rawExpr.$fieldName;
 	}
 }
 
 private class ValueClassHelperInfo implements HelperInfo {
-	final cl:ClassType;
+	final gen:HelperGenerator;
+	final classType:ClassType;
+	final appliedParams:Array<Type>;
 
-	public function new(cl) {
-		this.cl = cl;
+	public function new(gen, classType, appliedParams) {
+		this.gen = gen;
+		this.classType = classType;
+		this.appliedParams = appliedParams;
 	}
 
 	public function helperExpr():Expr {
 		return macro null;
+	}
+
+	public function rawValueConverterExpr():Expr {
+		var rawValueConverterName = ValueMacro.getRawValueConverterName(classType.name);
+		var typeExpr = macro $p{classType.pack.concat([rawValueConverterName])};
+		return macro $typeExpr.get();
 	}
 
 	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr):Expr {
@@ -271,12 +288,21 @@ private class ValueClassHelperInfo implements HelperInfo {
 		return macro if ($valueExpr != null) ${callback(macro $valueExpr.__toRawValue())} else ${noValueCallback()};
 	}
 
-	public function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String):Expr {
-		var typeExpr = {
-			var a = cl.module.split(".");
-			a.push(cl.name);
+	function makeTypeExpr() {
+		return {
+			var a = classType.module.split(".");
+			a.push(classType.name);
 			macro $p{a};
 		};
-		return macro $instanceExpr.$fieldName = @:privateAccess $typeExpr.__fromRawValue($rawExpr.$fieldName);
+	}
+
+	public function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String, pos:Position):Expr {
+		var typeExpr = makeTypeExpr();
+		var args = [macro $rawExpr.$fieldName];
+		for (t in appliedParams) {
+			var helper = gen.getHelper(t, t, pos);
+			args.push(helper.rawValueConverterExpr());
+		}
+		return macro $instanceExpr.$fieldName = @:privateAccess $typeExpr.__fromRawValue($a{args});
 	}
 }
