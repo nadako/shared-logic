@@ -7,7 +7,8 @@ class GameData extends Value {
 		__setup(transaction, dbChanges);
 	}
 
-	public function toRawValue() return __toRawValue();
+	public inline function toRawValue() return __toRawValue();
+	public static inline function fromRawValue(raw) return __fromRawValue(raw);
 }
 
 class Player extends Value {
@@ -30,10 +31,19 @@ class Resources extends Value {
 
 class Main {
 	static function main() {
+		var raw:RawValue = {
+			player: {
+				name: "Dan",
+				resources: {
+					gold: 1000
+				}
+			}
+		};
+
+		var data = GameData.fromRawValue(raw);
+
 		var transaction = new Transaction();
 		var dbChanges = new DbChanges();
-
-		var data = new GameData();
 		data.setup(transaction, dbChanges);
 
 		data.player = new Player("Dan");

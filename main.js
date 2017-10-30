@@ -44,6 +44,14 @@ Value.prototype = $extend(ValueBase.prototype,{
 });
 var GameData = function() {
 };
+GameData.fromRawValue = function(raw) {
+	return GameData.__fromRawValue(raw);
+};
+GameData.__fromRawValue = function(raw) {
+	var instance = Object.create(GameData.prototype);
+	instance.set_player(Player.__fromRawValue(raw.player));
+	return instance;
+};
 GameData.__super__ = Value;
 GameData.prototype = $extend(Value.prototype,{
 	set_player: function(value) {
@@ -79,6 +87,12 @@ GameData.prototype = $extend(Value.prototype,{
 var Player = function(name) {
 	this.set_name(name);
 	this.set_resources(new Resources());
+};
+Player.__fromRawValue = function(raw) {
+	var instance = Object.create(Player.prototype);
+	instance.set_name(raw.fieldName);
+	instance.set_resources(Resources.__fromRawValue(raw.resources));
+	return instance;
 };
 Player.__super__ = Value;
 Player.prototype = $extend(Value.prototype,{
@@ -141,6 +155,11 @@ Player.prototype = $extend(Value.prototype,{
 var Resources = function() {
 	this.set_gold(0);
 };
+Resources.__fromRawValue = function(raw) {
+	var instance = Object.create(Resources.prototype);
+	instance.set_gold(raw.fieldName);
+	return instance;
+};
 Resources.__super__ = Value;
 Resources.prototype = $extend(Value.prototype,{
 	set_gold: function(value) {
@@ -167,11 +186,12 @@ Resources.prototype = $extend(Value.prototype,{
 });
 var Main = function() { };
 Main.main = function() {
-	var data = new GameData();
+	var data = GameData.__fromRawValue({ player : { name : "Dan", resources : { gold : 1000}}});
 	data.__setup(new Transaction(),new DbChanges());
 	data.set_player(new Player("Dan"));
 	data.player.set_name("John");
 	data.player.resources.set_gold(100);
+	console.log("Main.hx:54:",data);
 };
 var Transaction = function() {
 	this.rollbacks = [];

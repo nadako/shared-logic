@@ -9,11 +9,24 @@ class ValueMacro {
 		var newFields = new Array<Field>();
 		var setupExprs = new Array<Expr>();
 		var toRawExprs = new Array<Expr>();
-		var pos = Context.currentPos();
+		var fromRawExprs = new Array<Expr>();
+		var gen = new HelperGenerator();
+
+		var thisTP, thisModule, pos;
+		switch Context.getLocalType() {
+			case TInst(_.get() => cl, _):
+				thisTP = getTypePath(cl);
+				thisModule = cl.module;
+				pos = cl.pos;
+			case _:
+				throw new Error("ValueMacro.build() called on a non-class", Context.currentPos());
+		}
+		var thisCT = TPath(thisTP);
 
 		for (field in fields) {
 			if (field.access.indexOf(AStatic) != -1)
 				continue; // skip static fields
+
 			switch field.kind {
 				case FFun(_) | FProp("get" | "never", "set" | "never", _, _):
 					// allow methods and non-physical properties
@@ -27,7 +40,7 @@ class ValueMacro {
 
 					var fieldName = field.name;
 					var fieldType = type.toType();
-					var helper = getHelper(fieldType, fieldType, field.pos);
+					var helper = gen.getHelper(fieldType, fieldType, field.pos);
 
 					var setupExpr = helper.setup(macro this.$fieldName, macro transaction, macro dbChanges);
 					if (setupExpr != null)
@@ -35,6 +48,9 @@ class ValueMacro {
 
 					var toRawExpr = helper.toRaw(macro this.$fieldName, rawValueExpr -> macro raw.$fieldName = $rawValueExpr, () -> macro {});
 					toRawExprs.push(toRawExpr);
+
+					var fromRawExpr = helper.fromRaw(macro raw, macro instance, fieldName);
+					fromRawExprs.push(fromRawExpr);
 
 					var dbChangeToRawExpr = helper.toRaw(macro value, rawValueExpr -> rawValueExpr, () -> macro null);
 
@@ -102,17 +118,61 @@ class ValueMacro {
 			});
 		}
 
+		{
+			var thisTypeExpr = macro $p{thisTP.pack.concat([thisTP.name, thisTP.sub])};
+
+			newFields.push({
+				pos: pos,
+				name: "__fromRawValue",
+				access: [AStatic],
+				meta: [{name: ":pure", pos: pos}],
+				kind: FFun({
+					args: [{name: "raw", type: macro : RawValue}],
+					ret: thisCT,
+					expr: macro {
+						var instance = std.Type.createEmptyInstance($thisTypeExpr);
+						$b{fromRawExprs};
+						return instance;
+					}
+				})
+			});
+
+			var rawValueConverterName = thisTP.sub + "__RawValueConverter";
+			var rawValueConverterTD = macro class $rawValueConverterName implements RawValueConverter<$thisCT> {
+				public inline function new() {}
+				public inline function fromRawValue(raw) return @:privateAccess $thisTypeExpr.__fromRawValue(raw);
+			};
+			rawValueConverterTD.pack = thisTP.pack;
+			Context.defineType(rawValueConverterTD, thisModule);
+		}
+
 		return fields.concat(newFields);
 	}
 
-	static function getHelper(type:Type, realType:Type, pos:Position):HelperInfo {
+	public static function getTypePath(t:BaseType):TypePath {
+		var module = t.module.split(".").pop();
+		return {
+			pack: t.pack,
+			name: module,
+			sub: t.name
+		};
+	}
+
+}
+
+private class HelperGenerator {
+	public function new() {
+		// TODO: add cache here to prevent stack overflows with recursive types and compiler-cache issues
+	}
+
+	public function getHelper(type:Type, realType:Type, pos:Position):HelperInfo {
 		switch type {
 			case TInst(_.get() => cl, params):
 				switch [cl, params] {
 					case [{pack: [], name: "String"}, _]:
 						return new BasicTypeHelperInfo(true);
 					case _ if (isValueClass(cl)):
-						return new ValueClassHelperInfo();
+						return new ValueClassHelperInfo(cl);
 					case _:
 				}
 
@@ -136,7 +196,7 @@ class ValueMacro {
 		throw new Error("Unsupported type for Value fields: " + realType.toString(), pos);
 	}
 
-	static function isValueClass(cl:ClassType):Bool {
+	function isValueClass(cl:ClassType):Bool {
 		return switch cl {
 			case {pack: [], name: "ValueBase"}: true;
 			case _ if (cl.superClass != null): isValueClass(cl.superClass.t.get());
@@ -151,6 +211,7 @@ private interface HelperInfo {
 	function unlink(valueExpr:Expr):Expr;
 	function setup(valueExpr:Expr, transactionExpr:Expr, dbChangesExpr:Expr):Null<Expr>;
 	function toRaw(valueExpr:Expr, callback:Expr->Expr, noValueCallback:()->Expr):Expr;
+	function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String):Expr;
 }
 
 private class BasicTypeHelperInfo implements HelperInfo {
@@ -170,10 +231,19 @@ private class BasicTypeHelperInfo implements HelperInfo {
 			return callback(valueExpr);
 		}
 	}
+
+	public function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String):Expr {
+		// TODO: handle weird JS fields like `constructor`
+		return macro $instanceExpr.$fieldName = $rawExpr.fieldName;
+	}
 }
 
 private class ValueClassHelperInfo implements HelperInfo {
-	public function new() {}
+	final cl:ClassType;
+
+	public function new(cl) {
+		this.cl = cl;
+	}
 
 	public function helperExpr():Expr {
 		return macro null;
@@ -193,5 +263,14 @@ private class ValueClassHelperInfo implements HelperInfo {
 
 	public function toRaw(valueExpr:Expr, callback:Expr->Expr, noValueCallback:()->Expr):Expr {
 		return macro if ($valueExpr != null) ${callback(macro $valueExpr.__toRawValue())} else ${noValueCallback()};
+	}
+
+	public function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String):Expr {
+		var typeExpr = {
+			var a = cl.module.split(".");
+			a.push(cl.name);
+			macro $p{a};
+		};
+		return macro $instanceExpr.$fieldName = @:privateAccess $typeExpr.__fromRawValue($rawExpr.$fieldName);
 	}
 }
