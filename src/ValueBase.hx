@@ -14,6 +14,7 @@ class ValueBase {
 	function __unlink() {
 		__parent = null;
 		__name = null;
+		__dbChanges = null;
 	}
 
 	function __setup(transaction:Transaction, dbChanges:DbChanges) {
@@ -27,8 +28,7 @@ class ValueBase {
 	}
 
 	@:pure
-	function __makeFieldPath(field:String):Array<String> {
-		var path = [field];
+	function __makeFieldPath(path:Array<String>):Array<String> {
 		var object = this;
 		while (object.__parent != null) {
 			path.push(object.__name);

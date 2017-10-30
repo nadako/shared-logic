@@ -1,5 +1,6 @@
 class GameData extends Value {
 	public var player:Player;
+	public var items:ArrayValue<Int>;
 
 	public function new() {}
 
@@ -37,7 +38,8 @@ class Main {
 				resources: {
 					gold: 1000
 				}
-			}
+			},
+			items: [1,2,3]
 		};
 
 		var data = GameData.fromRawValue(raw);
@@ -47,16 +49,13 @@ class Main {
 		data.setup(transaction, dbChanges);
 
 		data.player = new Player("Dan");
-		// transaction.commit();
 
 		data.player.name = "John";
 		data.player.resources.gold = 100;
-		// trace(data);
+		data.items.push(4);
+		data.items.push(5);
+		data.items.pop();
 
-		// transaction.rollback();
-
-		// trace(data);
-		// trace(data.toRawValue());
-		// trace(haxe.Json.stringify(@:privateAccess dbChanges.changes));
+		trace(haxe.Json.stringify(dbChanges.commit(), "  "));
 	}
 }

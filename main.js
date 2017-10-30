@@ -6,9 +6,6 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
-var DbChanges = function() {
-	this.changes = [];
-};
 var ValueBase = function() { };
 ValueBase.prototype = {
 	__link: function(parent,name) {
@@ -22,13 +19,16 @@ ValueBase.prototype = {
 	,__unlink: function() {
 		this.__parent = null;
 		this.__name = null;
+		this.__dbChanges = null;
 	}
 	,__setup: function(transaction,dbChanges) {
 		this.__transaction = transaction;
 		this.__dbChanges = dbChanges;
 	}
-	,__makeFieldPath: function(field) {
-		var path = [field];
+	,__toRawValue: function() {
+		return { };
+	}
+	,__makeFieldPath: function(path) {
 		var object = this;
 		while(object.__parent != null) {
 			path.push(object.__name);
@@ -38,6 +38,68 @@ ValueBase.prototype = {
 		return path;
 	}
 };
+var ArrayValue = function() {
+	this.array = [];
+};
+ArrayValue.__fromRawValue = function(raw,converter) {
+	var rawArray = raw;
+	var instance = new ArrayValue();
+	var _g = 0;
+	while(_g < rawArray.length) {
+		var value = rawArray[_g];
+		++_g;
+		instance.array.push(converter != null ? converter.fromRawValue(value) : value);
+	}
+	return instance;
+};
+ArrayValue.__super__ = ValueBase;
+ArrayValue.prototype = $extend(ValueBase.prototype,{
+	push: function(value) {
+		var _gthis = this;
+		var result = this.array.push(value);
+		if(this.helper != null) {
+			this.helper.link(value,this,"" + this.array.length);
+		}
+		if(this.__transaction != null) {
+			this.__transaction.rollbacks.push(function() {
+				return _gthis.array.pop();
+			});
+		}
+		if(this.__dbChanges != null) {
+			this.__dbChanges.changes.push({ kind : "push", path : this.__makeFieldPath([]), value : this.helper != null ? this.helper.toRawValue(value) : value});
+		}
+		return result;
+	}
+	,pop: function() {
+		var _gthis = this;
+		var wasNonEmpty = this.array.length > 0;
+		var value = this.array.pop();
+		if(this.helper != null) {
+			this.helper.unlink(value);
+		}
+		if(wasNonEmpty && this.__transaction != null) {
+			this.__transaction.rollbacks.push(function() {
+				return _gthis.array.push(value);
+			});
+		}
+		if(this.__dbChanges != null) {
+			this.__dbChanges.changes.push({ kind : "pop", path : this.__makeFieldPath([])});
+		}
+		return value;
+	}
+});
+var DbChanges = function() {
+	this.changes = [];
+};
+DbChanges.prototype = {
+	commit: function() {
+		var committedChanges = this.changes;
+		this.changes = [];
+		return committedChanges;
+	}
+};
+var RawValueConverter = function() { };
+var Helper = function() { };
 var Value = function() { };
 Value.__super__ = ValueBase;
 Value.prototype = $extend(ValueBase.prototype,{
@@ -50,6 +112,7 @@ GameData.fromRawValue = function(raw) {
 GameData.__fromRawValue = function(raw) {
 	var instance = Object.create(GameData.prototype);
 	instance.set_player(Player.__fromRawValue(raw.player));
+	instance.set_items(ArrayValue.__fromRawValue(raw.items));
 	return instance;
 };
 GameData.__super__ = Value;
@@ -71,7 +134,31 @@ GameData.prototype = $extend(Value.prototype,{
 				});
 			}
 			if(this.__dbChanges != null) {
-				this.__dbChanges.changes.push({ path : this.__makeFieldPath("player"), value : value != null ? value.__toRawValue() : null});
+				var fieldPath = this.__makeFieldPath(["player"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value.__toRawValue()} : { kind : "delete", path : fieldPath});
+			}
+		}
+		return value;
+	}
+	,set_items: function(value) {
+		var _gthis = this;
+		var oldValue = this.items;
+		if(oldValue != value) {
+			if(oldValue != null) {
+				oldValue.__unlink();
+			}
+			if(value != null) {
+				value.__link(this,"items");
+			}
+			this.items = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.items = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				var fieldPath = this.__makeFieldPath(["items"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value.__toRawValue()} : { kind : "delete", path : fieldPath});
 			}
 		}
 		return value;
@@ -82,6 +169,19 @@ GameData.prototype = $extend(Value.prototype,{
 		if(this.player != null) {
 			this.player.__setup(transaction,dbChanges);
 		}
+		if(this.items != null) {
+			this.items.__setup(transaction,dbChanges);
+		}
+	}
+	,__toRawValue: function() {
+		var raw = { };
+		if(this.player != null) {
+			raw.player = this.player.__toRawValue();
+		}
+		if(this.items != null) {
+			raw.items = this.items.__toRawValue();
+		}
+		return raw;
 	}
 });
 var Player = function(name) {
@@ -107,7 +207,8 @@ Player.prototype = $extend(Value.prototype,{
 				});
 			}
 			if(this.__dbChanges != null) {
-				this.__dbChanges.changes.push({ path : this.__makeFieldPath("name"), value : value != null ? value : null});
+				var fieldPath = this.__makeFieldPath(["name"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value} : { kind : "delete", path : fieldPath});
 			}
 		}
 		return value;
@@ -129,7 +230,8 @@ Player.prototype = $extend(Value.prototype,{
 				});
 			}
 			if(this.__dbChanges != null) {
-				this.__dbChanges.changes.push({ path : this.__makeFieldPath("resources"), value : value != null ? value.__toRawValue() : null});
+				var fieldPath = this.__makeFieldPath(["resources"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value.__toRawValue()} : { kind : "delete", path : fieldPath});
 			}
 		}
 		return value;
@@ -173,7 +275,7 @@ Resources.prototype = $extend(Value.prototype,{
 				});
 			}
 			if(this.__dbChanges != null) {
-				this.__dbChanges.changes.push({ path : this.__makeFieldPath("gold"), value : value});
+				this.__dbChanges.changes.push({ kind : "set", path : this.__makeFieldPath(["gold"]), value : value});
 			}
 		}
 		return value;
@@ -186,12 +288,16 @@ Resources.prototype = $extend(Value.prototype,{
 });
 var Main = function() { };
 Main.main = function() {
-	var data = GameData.__fromRawValue({ player : { name : "Dan", resources : { gold : 1000}}});
-	data.__setup(new Transaction(),new DbChanges());
+	var data = GameData.__fromRawValue({ player : { name : "Dan", resources : { gold : 1000}}, items : [1,2,3]});
+	var dbChanges = new DbChanges();
+	data.__setup(new Transaction(),dbChanges);
 	data.set_player(new Player("Dan"));
 	data.player.set_name("John");
 	data.player.resources.set_gold(100);
-	console.log("Main.hx:54:",data);
+	data.items.push(4);
+	data.items.push(5);
+	data.items.pop();
+	console.log("Main.hx:59:",JSON.stringify(dbChanges.commit(),null,"  "));
 };
 var Transaction = function() {
 	this.rollbacks = [];

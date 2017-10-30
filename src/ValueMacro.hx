@@ -52,7 +52,11 @@ class ValueMacro {
 					var fromRawExpr = helper.fromRaw(macro raw, macro instance, fieldName);
 					fromRawExprs.push(fromRawExpr);
 
-					var dbChangeToRawExpr = helper.toRaw(macro value, rawValueExpr -> rawValueExpr, () -> macro null);
+					var dbChangeExpr = helper.toRaw(
+						macro value,
+						rawValueExpr -> macro DbChanges.DbChange.set(fieldPath, $rawValueExpr),
+						() ->  macro DbChanges.DbChange.delete(fieldPath)
+					);
 
 					field.kind = FProp("default", "set", type, expr);
 					newFields.push({
@@ -70,8 +74,10 @@ class ValueMacro {
 									this.$fieldName = value;
 									if (__transaction != null)
 										__transaction.addRollback(() -> this.$fieldName = oldValue);
-									if (__dbChanges != null)
-										__dbChanges.register({path: __makeFieldPath($v{fieldName}), value: $dbChangeToRawExpr});
+									if (__dbChanges != null) {
+										var fieldPath = __makeFieldPath([$v{fieldName}]);
+										__dbChanges.register($dbChangeExpr);
+									}
 								}
 								return value;
 							}
