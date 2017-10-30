@@ -54,6 +54,34 @@ ArrayValue.__fromRawValue = function(raw,converter) {
 };
 ArrayValue.__super__ = ValueBase;
 ArrayValue.prototype = $extend(ValueBase.prototype,{
+	push: function(value) {
+		var _gthis = this;
+		var name = "" + this.array.length;
+		var result = this.array.push(value);
+		if(this.helper != null) {
+			this.helper.link(value,this,name);
+		}
+		if(this.__transaction != null) {
+			this.__transaction.rollbacks.push(function() {
+				return _gthis.array.pop();
+			});
+		}
+		if(this.__dbChanges != null) {
+			this.__dbChanges.changes.push({ kind : "push", path : this.__makeFieldPath([]), value : this.helper != null ? this.helper.toRawValue(value) : value});
+		}
+		return result;
+	}
+	,__toRawValue: function() {
+		var raw = [];
+		var _g = 0;
+		var _g1 = this.array;
+		while(_g < _g1.length) {
+			var value = _g1[_g];
+			++_g;
+			raw.push(this.helper != null ? this.helper.toRawValue(value) : value);
+		}
+		return raw;
+	}
 });
 var DbChanges = function() {
 	this.changes = [];
@@ -66,6 +94,7 @@ DbChanges.prototype = {
 	}
 };
 var RawValueConverter = function() { };
+var Helper = function() { };
 var Value = function() { };
 Value.__super__ = ValueBase;
 Value.prototype = $extend(ValueBase.prototype,{
@@ -148,6 +177,7 @@ GameData.prototype = $extend(Value.prototype,{
 				oldValue.__unlink();
 			}
 			if(value != null) {
+				value.helper = ValueHelper.instance;
 				value.__link(this,"items");
 			}
 			this.items = value;
@@ -288,14 +318,13 @@ Resources.prototype = $extend(Value.prototype,{
 });
 var Main = function() { };
 Main.main = function() {
-	var data = GameData.__fromRawValue({ player : { name : "Dan", resources : { gold : 1000}}, items : [{ value : "foo"},{ value : "bar"}]});
+	var data = GameData.__fromRawValue({ player : { name : "Dan", resources : { gold : 1000}}, items : []});
 	var dbChanges = new DbChanges();
 	data.__setup(new Transaction(),dbChanges);
-	data.set_player(new Player("Dan"));
-	data.player.set_name("John");
-	data.player.resources.set_gold(100);
-	console.log("Main.hx:60:",data.items.array[0]);
-	console.log("Main.hx:62:",JSON.stringify(dbChanges.commit(),null,"  "));
+	data.items.push(new SomeEntry());
+	data.items.array[0].set_value("SOME");
+	console.log("Main.hx:65:",JSON.stringify(dbChanges.commit()));
+	console.log("Main.hx:66:",JSON.stringify(data.__toRawValue()));
 };
 var SomeEntry_$_$RawValueConverter = function() {
 };
@@ -307,6 +336,17 @@ SomeEntry_$_$RawValueConverter.prototype = {
 };
 var Transaction = function() {
 	this.rollbacks = [];
+};
+var ValueHelper = function() {
+};
+ValueHelper.__interfaces__ = [Helper];
+ValueHelper.prototype = {
+	link: function(value,parent,name) {
+		value.__link(parent,name);
+	}
+	,toRawValue: function(value) {
+		return value.__toRawValue();
+	}
 };
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
@@ -327,5 +367,6 @@ js__$Boot_HaxeError.__super__ = Error;
 js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
 });
 SomeEntry_$_$RawValueConverter.instance = new SomeEntry_$_$RawValueConverter();
+ValueHelper.instance = new ValueHelper();
 Main.main();
 })();

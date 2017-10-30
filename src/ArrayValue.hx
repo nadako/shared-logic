@@ -8,12 +8,17 @@ class ArrayValue<T> extends ValueBase {
 		this.array = [];
 	}
 
+	inline function __setHelpers(helper:Helper<T>) {
+		this.helper = helper;
+	}
+
 	public inline function get(index:Int):T return array[index];
 
 	public function push(value:T):Int {
+		var name = "" + array.length;
 		var result = array.push(value);
 		if (helper != null)
-			helper.link(value, this, "" + array.length);
+			helper.link(value, this, name);
 		if (__transaction != null)
 			__transaction.addRollback(() -> array.pop());
 		if (__dbChanges != null)
@@ -38,5 +43,15 @@ class ArrayValue<T> extends ValueBase {
 		for (value in (raw : Array<RawValue>))
 			instance.array.push(if (converter != null) converter.fromRawValue(value) else value);
 		return instance;
+	}
+
+
+	@:pure
+	override function __toRawValue():RawValue {
+		var raw = [];
+		for (value in array) {
+			raw.push(if (helper != null) helper.toRawValue(value) else value);
+		}
+		return raw;
 	}
 }

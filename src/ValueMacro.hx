@@ -70,7 +70,7 @@ class ValueMacro {
 								if (oldValue != value) {
 									var helper = ${helper.helperExpr()};
 									${helper.unlink(macro oldValue)};
-									${helper.link(macro value, macro this, macro $v{fieldName})};
+									${helper.link(macro value, macro this, macro $v{fieldName}, field.pos)};
 									this.$fieldName = value;
 									if (__transaction != null)
 										__transaction.addRollback(() -> this.$fieldName = oldValue);
@@ -219,7 +219,7 @@ private class HelperGenerator {
 private interface HelperInfo {
 	function helperExpr():Expr;
 	function rawValueConverterExpr():Expr;
-	function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr):Expr;
+	function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr, pos:Position):Expr;
 	function unlink(valueExpr:Expr):Expr;
 	function setup(valueExpr:Expr, transactionExpr:Expr, dbChangesExpr:Expr):Null<Expr>;
 	function toRaw(valueExpr:Expr, callback:Expr->Expr, noValueCallback:()->Expr):Expr;
@@ -233,7 +233,7 @@ private class BasicTypeHelperInfo implements HelperInfo {
 
 	public function helperExpr():Expr return macro null;
 	public function rawValueConverterExpr():Expr return macro null;
-	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr):Expr return macro {};
+	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr, pos:Position):Expr return macro {};
 	public function unlink(valueExpr:Expr):Expr return macro {};
 	public function setup(valueExpr:Expr, transactionExpr:Expr, dbChangesExpr:Expr):Null<Expr> return null;
 
@@ -263,7 +263,7 @@ private class ValueClassHelperInfo implements HelperInfo {
 	}
 
 	public function helperExpr():Expr {
-		return macro null;
+		return macro ValueHelper.get();
 	}
 
 	public function rawValueConverterExpr():Expr {
@@ -272,8 +272,22 @@ private class ValueClassHelperInfo implements HelperInfo {
 		return macro $typeExpr.get();
 	}
 
-	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr):Expr {
-		return macro if ($valueExpr != null) $valueExpr.__link($parentExpr, $nameExpr);
+	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr, pos:Position):Expr {
+		var linkExpr = macro $valueExpr.__link($parentExpr, $nameExpr);
+
+		if (appliedParams.length > 0) {
+			var helperExprs = [];
+			for (t in appliedParams) {
+				var helper = gen.getHelper(t, t, pos);
+				helperExprs.push(helper.helperExpr());
+			}
+			linkExpr = macro {
+				@:privateAccess $valueExpr.__setHelpers($a{helperExprs});
+				$linkExpr;
+			}
+		}
+
+		return macro if ($valueExpr != null) $linkExpr;
 	}
 
 	public function unlink(valueExpr:Expr):Expr {

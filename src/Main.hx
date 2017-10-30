@@ -1,5 +1,5 @@
 class SomeEntry extends Value {
-	var value:String;
+	public var value:String;
 	public function new() {}
 }
 
@@ -44,7 +44,7 @@ class Main {
 					gold: 1000
 				}
 			},
-			items: [{value: "foo"}, {value: "bar"}]
+			items: []
 		};
 
 		var data = GameData.fromRawValue(raw);
@@ -53,12 +53,16 @@ class Main {
 		var dbChanges = new DbChanges();
 		data.setup(transaction, dbChanges);
 
-		data.player = new Player("Dan");
+		data.items.push(new SomeEntry());
+		data.items.get(0).value = "SOME";
 
-		data.player.name = "John";
-		data.player.resources.gold = 100;
-		trace(data.items.get(0));
+		// data.player = new Player("Dan");
 
-		trace(haxe.Json.stringify(dbChanges.commit(), "  "));
+		// data.player.name = "John";
+		// data.player.resources.gold = 100;
+		// trace(data.items.get(0));
+
+		trace(haxe.Json.stringify(dbChanges.commit()));
+		trace(haxe.Json.stringify(data.toRawValue()));
 	}
 }
