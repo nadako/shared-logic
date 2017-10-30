@@ -14,7 +14,13 @@ class DbChanges {
 		changes.push(change);
 	}
 
-	public function clear() {
+	public function commit() {
+		var committedChanges = changes;
+		changes = [];
+		return committedChanges;
+	}
+
+	public inline function rollback() {
 		changes = [];
 	}
 }
