@@ -1,5 +1,9 @@
 package classy.core;
 
+/**
+	"Транзакция" чейнджей БД.
+	Каждое изменение прилинкованного объекта добавляет сюда чейндж.
+**/
 class DbChanges {
 	var changes:Array<DbChange>;
 

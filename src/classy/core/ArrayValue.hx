@@ -1,5 +1,8 @@
 package classy.core;
 
+/**
+	Обёртка-Value над упорядоченным массивом, генерирующая чейнджи и умеющая (де)сериализоваться.
+**/
 class ArrayValue<T> extends ValueBase {
 	final array:Array<T>;
 	var helper:Null<Helper<T>>;

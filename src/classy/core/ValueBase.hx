@@ -1,5 +1,11 @@
 package classy.core;
 
+/**
+	Базовый класс для всех классов модели.
+	Имеет два типа наследников:
+	 - Value - магический класс для пользовательских структур
+	 - Коллекции (напр. ArrayValue), реализованные вручную
+**/
 class ValueBase {
 	var __parent:ValueBase;
 	var __name:String;
