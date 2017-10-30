@@ -17,7 +17,10 @@ class EnumHelperInfo implements HelperInfo {
 	}
 
 	public function helperExpr():Expr {
-		return macro classy.core.ValueHelper.get();
+		// var helperName = ValueMacro.getHelperName(enumType.name);
+		// var typeExpr = macro $p{enumType.pack.concat([helperName])};
+		// return macro $typeExpr.get();
+		return macro null;
 	}
 
 	public function rawValueConverterExpr():Expr {
@@ -29,17 +32,17 @@ class EnumHelperInfo implements HelperInfo {
 	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr, pos:Position):Expr {
 		var linkExpr = macro $valueExpr/* .__link($parentExpr, $nameExpr) */;
 
-		if (appliedParams.length > 0) {
-			var helperExprs = [];
-			for (t in appliedParams) {
-				var helper = gen.getHelper(t, t, pos);
-				helperExprs.push(helper.helperExpr());
-			}
-			linkExpr = macro {
-				@:privateAccess $valueExpr.__setHelpers($a{helperExprs});
-				$linkExpr;
-			}
-		}
+		// if (appliedParams.length > 0) {
+		// 	var helperExprs = [];
+		// 	for (t in appliedParams) {
+		// 		var helper = gen.getHelper(t, t, pos);
+		// 		helperExprs.push(helper.helperExpr());
+		// 	}
+		// 	linkExpr = macro {
+		// 		@:privateAccess $valueExpr.__setHelpers($a{helperExprs});
+		// 		$linkExpr;
+		// 	}
+		// }
 
 		return macro if ($valueExpr != null) $linkExpr;
 	}
