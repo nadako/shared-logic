@@ -2,14 +2,18 @@ import classy.core.RawValue;
 import classy.core.Transaction;
 import classy.core.DbChanges;
 
-class SomeEntry extends Value {
-	public var value:String;
-	public function new() {}
+enum MyEnum {
+	A;
+	B(a:Int);
+	C(a:Int, b:Player);
+}
+
+class Player extends Value {
+	public var some:String;
 }
 
 class GameData extends Value {
-	public var player:Player;
-	public var items:ArrayValue<SomeEntry>;
+	var value:MyEnum;
 
 	public function new() {}
 
@@ -21,35 +25,9 @@ class GameData extends Value {
 	public static inline function fromRawValue(raw) return __fromRawValue(raw);
 }
 
-class Player extends Value {
-	public var name:String;
-	public var resources:Resources;
-
-	public function new(name) {
-		this.name = name;
-		this.resources = new Resources();
-	}
-}
-
-class Resources extends Value {
-	public var gold:Int;
-
-	public function new() {
-		gold = 0;
-	}
-}
-
 class Main {
 	static function main() {
-		var raw:RawValue = {
-			player: {
-				name: "Dan",
-				resources: {
-					gold: 1000
-				}
-			},
-			items: []
-		};
+		var raw:RawValue = {};
 
 		var data = GameData.fromRawValue(raw);
 
@@ -57,16 +35,6 @@ class Main {
 		var dbChanges = new DbChanges();
 		data.setup(transaction, dbChanges);
 
-		data.items.push(new SomeEntry());
-		data.items.get(0).value = "SOME";
-
-		// data.player = new Player("Dan");
-
-		// data.player.name = "John";
-		// data.player.resources.gold = 100;
-		// trace(data.items.get(0));
-
-		trace(haxe.Json.stringify(dbChanges.commit()));
 		trace(haxe.Json.stringify(data.toRawValue()));
 	}
 }
