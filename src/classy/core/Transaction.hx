@@ -1,3 +1,5 @@
+package classy.core;
+
 typedef Rollback = () -> Void;
 
 class Transaction {

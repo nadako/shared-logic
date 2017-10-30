@@ -1,3 +1,5 @@
+package classy.core;
+
 class ValueBase {
 	var __parent:ValueBase;
 	var __name:String;

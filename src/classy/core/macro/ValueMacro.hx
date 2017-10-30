@@ -1,3 +1,6 @@
+package classy.core.macro;
+
+#if macro
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -54,8 +57,8 @@ class ValueMacro {
 
 					var dbChangeExpr = helper.toRaw(
 						macro value,
-						rawValueExpr -> macro DbChanges.DbChange.set(fieldPath, $rawValueExpr),
-						() ->  macro DbChanges.DbChange.delete(fieldPath)
+						rawValueExpr -> macro classy.core.DbChange.set(fieldPath, $rawValueExpr),
+						() ->  macro classy.core.DbChange.delete(fieldPath)
 					);
 
 					field.kind = FProp("default", "set", type, expr);
@@ -116,7 +119,7 @@ class ValueMacro {
 					args: [],
 					ret: null,
 					expr: macro {
-						var raw:RawValue = {};
+						var raw:classy.core.RawValue = {};
 						$b{toRawExprs}
 						return raw;
 					}
@@ -133,7 +136,7 @@ class ValueMacro {
 				access: [AStatic],
 				meta: [{name: ":pure", pos: pos}],
 				kind: FFun({
-					args: [{name: "raw", type: macro : RawValue}],
+					args: [{name: "raw", type: macro : classy.core.RawValue}],
 					ret: thisCT,
 					expr: macro {
 						var instance = std.Type.createEmptyInstance($thisTypeExpr);
@@ -145,7 +148,7 @@ class ValueMacro {
 
 			var rawValueConverterName = getRawValueConverterName(thisTP.sub);
 			var rawValueConverterTP = {pack: thisTP.pack, name: rawValueConverterName};
-			var rawValueConverterTD = macro class $rawValueConverterName implements RawValueConverter<$thisCT> {
+			var rawValueConverterTD = macro class $rawValueConverterName implements classy.core.RawValueConverter<$thisCT> {
 				inline function new() {}
 				static var instance = new $rawValueConverterTP();
 				public static inline function get() return instance;
@@ -209,7 +212,7 @@ private class HelperGenerator {
 
 	function isValueClass(cl:ClassType):Bool {
 		return switch cl {
-			case {pack: [], name: "ValueBase"}: true;
+			case {pack: ["classy", "core"], name: "ValueBase"}: true;
 			case _ if (cl.superClass != null): isValueClass(cl.superClass.t.get());
 			case _: false;
 		}
@@ -263,7 +266,7 @@ private class ValueClassHelperInfo implements HelperInfo {
 	}
 
 	public function helperExpr():Expr {
-		return macro ValueHelper.get();
+		return macro classy.core.ValueHelper.get();
 	}
 
 	public function rawValueConverterExpr():Expr {
@@ -320,3 +323,4 @@ private class ValueClassHelperInfo implements HelperInfo {
 		return macro $instanceExpr.$fieldName = @:privateAccess $typeExpr.__fromRawValue($a{args});
 	}
 }
+#end

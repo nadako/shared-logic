@@ -1,4 +1,4 @@
-import DbChanges.DbChange;
+package classy.core;
 
 class ArrayValue<T> extends ValueBase {
 	final array:Array<T>;

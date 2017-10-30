@@ -1,3 +1,7 @@
+import classy.core.RawValue;
+import classy.core.Transaction;
+import classy.core.DbChanges;
+
 class SomeEntry extends Value {
 	public var value:String;
 	public function new() {}

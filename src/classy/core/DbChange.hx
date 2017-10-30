@@ -1,3 +1,5 @@
+package classy.core;
+
 abstract DbChange(RawValue) {
 	public inline static function set(path:Array<String>, value:RawValue):DbChange
 		return cast {kind: "set", path: path, value: value};
@@ -10,26 +12,4 @@ abstract DbChange(RawValue) {
 
 	public inline static function pop(path:Array<String>):DbChange
 		return cast {kind: "pop", path: path};
-}
-
-class DbChanges {
-	var changes:Array<DbChange>;
-
-	public function new() {
-		changes = [];
-	}
-
-	public inline function register(change) {
-		changes.push(change);
-	}
-
-	public function commit() {
-		var committedChanges = changes;
-		changes = [];
-		return committedChanges;
-	}
-
-	public inline function rollback() {
-		changes = [];
-	}
 }

@@ -1,4 +1,6 @@
-@:access(Value)
+package classy.core;
+
+@:access(classy.core.Value)
 class ValueHelper<T:Value> implements Helper<T> {
 	inline function new() {}
 	static var instance = new ValueHelper<Value>();

@@ -6,8 +6,9 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
-var ValueBase = function() { };
-ValueBase.prototype = {
+var classy_core_RawValueConverter = function() { };
+var classy_core_ValueBase = function() { };
+classy_core_ValueBase.prototype = {
 	__link: function(parent,name) {
 		if(this.__parent != null) {
 			throw new js__$Boot_HaxeError("Object is already linked");
@@ -38,66 +39,9 @@ ValueBase.prototype = {
 		return path;
 	}
 };
-var ArrayValue = function() {
-	this.array = [];
-};
-ArrayValue.__fromRawValue = function(raw,converter) {
-	var instance = new ArrayValue();
-	var _g = 0;
-	var _g1 = raw;
-	while(_g < _g1.length) {
-		var value = _g1[_g];
-		++_g;
-		instance.array.push(converter != null ? converter.fromRawValue(value) : value);
-	}
-	return instance;
-};
-ArrayValue.__super__ = ValueBase;
-ArrayValue.prototype = $extend(ValueBase.prototype,{
-	push: function(value) {
-		var _gthis = this;
-		var name = "" + this.array.length;
-		var result = this.array.push(value);
-		if(this.helper != null) {
-			this.helper.link(value,this,name);
-		}
-		if(this.__transaction != null) {
-			this.__transaction.rollbacks.push(function() {
-				return _gthis.array.pop();
-			});
-		}
-		if(this.__dbChanges != null) {
-			this.__dbChanges.changes.push({ kind : "push", path : this.__makeFieldPath([]), value : this.helper != null ? this.helper.toRawValue(value) : value});
-		}
-		return result;
-	}
-	,__toRawValue: function() {
-		var raw = [];
-		var _g = 0;
-		var _g1 = this.array;
-		while(_g < _g1.length) {
-			var value = _g1[_g];
-			++_g;
-			raw.push(this.helper != null ? this.helper.toRawValue(value) : value);
-		}
-		return raw;
-	}
-});
-var DbChanges = function() {
-	this.changes = [];
-};
-DbChanges.prototype = {
-	commit: function() {
-		var committedChanges = this.changes;
-		this.changes = [];
-		return committedChanges;
-	}
-};
-var RawValueConverter = function() { };
-var Helper = function() { };
-var Value = function() { };
-Value.__super__ = ValueBase;
-Value.prototype = $extend(ValueBase.prototype,{
+var classy_core_Value = function() { };
+classy_core_Value.__super__ = classy_core_ValueBase;
+classy_core_Value.prototype = $extend(classy_core_ValueBase.prototype,{
 });
 var SomeEntry = function() {
 };
@@ -106,8 +50,8 @@ SomeEntry.__fromRawValue = function(raw) {
 	instance.set_value(raw.value);
 	return instance;
 };
-SomeEntry.__super__ = Value;
-SomeEntry.prototype = $extend(Value.prototype,{
+SomeEntry.__super__ = classy_core_Value;
+SomeEntry.prototype = $extend(classy_core_Value.prototype,{
 	set_value: function(value) {
 		var _gthis = this;
 		var oldValue = this.value;
@@ -141,11 +85,11 @@ GameData.fromRawValue = function(raw) {
 GameData.__fromRawValue = function(raw) {
 	var instance = Object.create(GameData.prototype);
 	instance.set_player(Player.__fromRawValue(raw.player));
-	instance.set_items(ArrayValue.__fromRawValue(raw.items,SomeEntry_$_$RawValueConverter.instance));
+	instance.set_items(classy_core_ArrayValue.__fromRawValue(raw.items,SomeEntry_$_$RawValueConverter.instance));
 	return instance;
 };
-GameData.__super__ = Value;
-GameData.prototype = $extend(Value.prototype,{
+GameData.__super__ = classy_core_Value;
+GameData.prototype = $extend(classy_core_Value.prototype,{
 	set_player: function(value) {
 		var _gthis = this;
 		var oldValue = this.player;
@@ -177,7 +121,7 @@ GameData.prototype = $extend(Value.prototype,{
 				oldValue.__unlink();
 			}
 			if(value != null) {
-				value.helper = ValueHelper.instance;
+				value.helper = classy_core_ValueHelper.instance;
 				value.__link(this,"items");
 			}
 			this.items = value;
@@ -224,8 +168,8 @@ Player.__fromRawValue = function(raw) {
 	instance.set_resources(Resources.__fromRawValue(raw.resources));
 	return instance;
 };
-Player.__super__ = Value;
-Player.prototype = $extend(Value.prototype,{
+Player.__super__ = classy_core_Value;
+Player.prototype = $extend(classy_core_Value.prototype,{
 	set_name: function(value) {
 		var _gthis = this;
 		var oldValue = this.name;
@@ -292,8 +236,8 @@ Resources.__fromRawValue = function(raw) {
 	instance.set_gold(raw.gold);
 	return instance;
 };
-Resources.__super__ = Value;
-Resources.prototype = $extend(Value.prototype,{
+Resources.__super__ = classy_core_Value;
+Resources.prototype = $extend(classy_core_Value.prototype,{
 	set_gold: function(value) {
 		var _gthis = this;
 		var oldValue = this.gold;
@@ -319,28 +263,84 @@ Resources.prototype = $extend(Value.prototype,{
 var Main = function() { };
 Main.main = function() {
 	var data = GameData.__fromRawValue({ player : { name : "Dan", resources : { gold : 1000}}, items : []});
-	var dbChanges = new DbChanges();
-	data.__setup(new Transaction(),dbChanges);
+	var dbChanges = new classy_core_DbChanges();
+	data.__setup(new classy_core_Transaction(),dbChanges);
 	data.items.push(new SomeEntry());
 	data.items.array[0].set_value("SOME");
-	console.log("Main.hx:65:",JSON.stringify(dbChanges.commit()));
-	console.log("Main.hx:66:",JSON.stringify(data.__toRawValue()));
+	console.log("Main.hx:69:",JSON.stringify(dbChanges.commit()));
+	console.log("Main.hx:70:",JSON.stringify(data.__toRawValue()));
 };
 var SomeEntry_$_$RawValueConverter = function() {
 };
-SomeEntry_$_$RawValueConverter.__interfaces__ = [RawValueConverter];
+SomeEntry_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
 SomeEntry_$_$RawValueConverter.prototype = {
 	fromRawValue: function(raw) {
 		return SomeEntry.__fromRawValue(raw);
 	}
 };
-var Transaction = function() {
+var classy_core_ArrayValue = function() {
+	this.array = [];
+};
+classy_core_ArrayValue.__fromRawValue = function(raw,converter) {
+	var instance = new classy_core_ArrayValue();
+	var _g = 0;
+	var _g1 = raw;
+	while(_g < _g1.length) {
+		var value = _g1[_g];
+		++_g;
+		instance.array.push(converter != null ? converter.fromRawValue(value) : value);
+	}
+	return instance;
+};
+classy_core_ArrayValue.__super__ = classy_core_ValueBase;
+classy_core_ArrayValue.prototype = $extend(classy_core_ValueBase.prototype,{
+	push: function(value) {
+		var _gthis = this;
+		var name = "" + this.array.length;
+		var result = this.array.push(value);
+		if(this.helper != null) {
+			this.helper.link(value,this,name);
+		}
+		if(this.__transaction != null) {
+			this.__transaction.rollbacks.push(function() {
+				return _gthis.array.pop();
+			});
+		}
+		if(this.__dbChanges != null) {
+			this.__dbChanges.changes.push({ kind : "push", path : this.__makeFieldPath([]), value : this.helper != null ? this.helper.toRawValue(value) : value});
+		}
+		return result;
+	}
+	,__toRawValue: function() {
+		var raw = [];
+		var _g = 0;
+		var _g1 = this.array;
+		while(_g < _g1.length) {
+			var value = _g1[_g];
+			++_g;
+			raw.push(this.helper != null ? this.helper.toRawValue(value) : value);
+		}
+		return raw;
+	}
+});
+var classy_core_DbChanges = function() {
+	this.changes = [];
+};
+classy_core_DbChanges.prototype = {
+	commit: function() {
+		var committedChanges = this.changes;
+		this.changes = [];
+		return committedChanges;
+	}
+};
+var classy_core_Helper = function() { };
+var classy_core_Transaction = function() {
 	this.rollbacks = [];
 };
-var ValueHelper = function() {
+var classy_core_ValueHelper = function() {
 };
-ValueHelper.__interfaces__ = [Helper];
-ValueHelper.prototype = {
+classy_core_ValueHelper.__interfaces__ = [classy_core_Helper];
+classy_core_ValueHelper.prototype = {
 	link: function(value,parent,name) {
 		value.__link(parent,name);
 	}
@@ -367,6 +367,6 @@ js__$Boot_HaxeError.__super__ = Error;
 js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
 });
 SomeEntry_$_$RawValueConverter.instance = new SomeEntry_$_$RawValueConverter();
-ValueHelper.instance = new ValueHelper();
+classy_core_ValueHelper.instance = new classy_core_ValueHelper();
 Main.main();
 })();
