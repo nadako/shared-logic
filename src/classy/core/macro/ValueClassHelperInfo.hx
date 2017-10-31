@@ -53,7 +53,7 @@ class ValueClassHelperInfo implements HelperInfo {
 	}
 
 	public function setup(valueExpr:Expr, transactionExpr:Expr, dbChangesExpr:Expr):Null<Expr> {
-		return macro if ($valueExpr != null) $valueExpr.__setup($transactionExpr, $dbChangesExpr);
+		return macro if ($valueExpr != null) @:privateAccess $valueExpr.__setup($transactionExpr, $dbChangesExpr);
 	}
 
 	public function toRaw(valueExpr:Expr, callback:Expr->Expr, noValueCallback:()->Expr):Expr {

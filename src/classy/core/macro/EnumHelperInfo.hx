@@ -21,6 +21,7 @@ class EnumHelperInfo implements HelperInfo {
 	public function process() {
 		var linkCases = new Array<Case>();
 		var unlinkCases = new Array<Case>();
+		var setupCases = new Array<Case>();
 		var toRawValueCases = new Array<Case>();
 
 		var fromRawValueConditions = new Array<{value:Expr, expr:Expr}>();
@@ -33,6 +34,7 @@ class EnumHelperInfo implements HelperInfo {
 			var toRawExpr;
 			var linkExprs = [];
 			var unlinkExprs = [];
+			var setupExprs = [];
 
 			switch ctorField.type {
 				case TEnum(_):
@@ -54,6 +56,7 @@ class EnumHelperInfo implements HelperInfo {
 							_needsLinking = true;
 							linkExprs.push(argHelper.link(argIdent, macro parent, macro name + $v{"." + argName}, ctorField.pos));
 							unlinkExprs.push(argHelper.unlink(argIdent));
+							setupExprs.push(argHelper.setup(argIdent, macro transaction, macro dbChanges));
 						}
 						toRawExprs.push(argHelper.toRaw(
 							argIdent,
@@ -82,6 +85,11 @@ class EnumHelperInfo implements HelperInfo {
 				expr: macro $b{linkExprs}
 			});
 
+			setupCases.push({
+				values: [patternExpr],
+				expr: macro $b{setupExprs}
+			});
+
 			unlinkCases.push({
 				values: [patternExpr],
 				expr: macro $b{unlinkExprs}
@@ -95,6 +103,7 @@ class EnumHelperInfo implements HelperInfo {
 
 		var linkExpr = if (_needsLinking) {pos: enumType.pos, expr: ESwitch(macro value, linkCases, null)} else macro {};
 		var unlinkExpr = if (_needsLinking) {pos: enumType.pos, expr: ESwitch(macro value, unlinkCases, null)} else macro {};
+		var setupExpr = if (_needsLinking) {pos: enumType.pos, expr: ESwitch(macro value, setupCases, null)} else macro {};
 
 		fromRawValueCases.push({values: [macro unknown], expr: macro throw "Unknown enum tag: " + unknown});
 		var fromRawValueSwitchExpr = {pos: enumType.pos, expr: ESwitch(macro (Reflect.field(raw, "$tag") : String), fromRawValueCases, null)};
@@ -119,6 +128,10 @@ class EnumHelperInfo implements HelperInfo {
 
 				public function link(value:$enumCT, parent:classy.core.ValueBase, name:String):Void {
 					$linkExpr;
+				}
+
+				public function setup(value:$enumCT, transaction:classy.core.Transaction, dbChanges:classy.core.DbChanges):Void {
+					$setupExpr;
 				}
 
 				public function unlink(value:$enumCT):Void {
@@ -179,7 +192,7 @@ class EnumHelperInfo implements HelperInfo {
 	}
 
 	public function setup(valueExpr:Expr, transactionExpr:Expr, dbChangesExpr:Expr):Null<Expr> {
-		return macro if ($valueExpr != null) $valueExpr/* .__setup($transactionExpr, $dbChangesExpr) */;
+		return macro if ($valueExpr != null) ${helperExpr()}.setup($valueExpr, $transactionExpr, $dbChangesExpr);
 	}
 
 	public function toRaw(valueExpr:Expr, callback:Expr->Expr, noValueCallback:()->Expr):Expr {

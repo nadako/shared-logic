@@ -9,6 +9,10 @@ class ValueHelper<T:Value> implements Helper<T> {
 		return cast instance; // it's all the same
 	}
 
+	public function setup(value:T, transaction:Transaction, dbChanges:DbChanges):Void {
+		value.__setup(transaction, dbChanges);
+	}
+
 	public inline function link(value:T, parent:ValueBase, name:String):Void {
 		value.__link(parent, name);
 	}

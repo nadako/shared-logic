@@ -1,67 +1,76 @@
-import classy.core.RawValue;
+import classy.core.Value;
+import classy.core.ArrayValue;
 import classy.core.Transaction;
 import classy.core.DbChanges;
 
-enum MyEnum {
-	A;
-	B(a:Int);
-	C(a:Int, b:Player);
-	D(e:MyEnum2);
-}
+class GameData extends Value {
+	public var player:Player;
 
-enum MyEnum2 {
-	A;
-	B(v:Some);
+	public function new() {
+		player = new Player();
+	}
+
+	public function setup(transaction, dbChanges) __setup(transaction, dbChanges);
+	public function toRawValue() return __toRawValue();
 }
 
 class Player extends Value {
-	public var some:String;
-	public function new() some = "Hi";
-}
+	public var heroes:ArrayValue<Hero>;
 
-class Some extends Value {
-	public var some:String;
-	public function new() some = "Hi";
-}
-
-class Data extends Value {
-	public var value:MyEnum;
-	public function new() {};
-}
-
-class GameData extends Value {
-	public var arr:ArrayValue<MyEnum>;
-
-	public function new() {}
-
-	public inline function setup(transaction, dbChanges) {
-		__setup(transaction, dbChanges);
+	public function new() {
+		heroes = new ArrayValue();
 	}
+}
 
-	public inline function toRawValue() return __toRawValue();
-	public static inline function fromRawValue(raw) return __fromRawValue(raw);
+class Hero extends Value {
+	public var name:String;
+	public var state:HeroState;
+
+	public function new(name) {
+		this.name = name;
+		state = Free;
+	}
+}
+
+enum HeroState {
+	Free;
+	InSquad;
+	OnMap(placeId:Int);
+	AtWar(warData:HeroWarData);
+}
+
+class HeroWarData extends Value {
+	public var attackCount:Int;
+	public function new() {
+		attackCount = 0;
+	}
 }
 
 class Main {
 	static function main() {
-		var raw:RawValue = {
-			arr: [],
-		};
+		var data = new GameData();
 
-		var data = GameData.fromRawValue(raw);
-		// var data = new GameData();
+		var hero = new Hero("Sicario");
+		hero.state = AtWar(new HeroWarData());
+		data.player.heroes.push(hero);
 
 		var transaction = new Transaction();
 		var dbChanges = new DbChanges();
 		data.setup(transaction, dbChanges);
 
-		var some = new Some();
-		data.arr.push(A);
-		data.arr[0] = D(B(some));
-		some.some = "LOL";
+		trace(haxe.Json.stringify(data.toRawValue()));
+
+		for (hero in data.player.heroes) {
+			switch hero.state {
+				case Free | InSquad | OnMap(_): trace("not at war!");
+				case AtWar(warData):
+					warData.attackCount++;
+			}
+		}
 
 		for (change in dbChanges.commit())
 			trace(haxe.Json.stringify(change));
-		// trace(haxe.Json.stringify(data.toRawValue()));
+
+		trace(haxe.Json.stringify(data.toRawValue()));
 	}
 }

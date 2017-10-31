@@ -26,6 +26,16 @@ class ArrayValueImpl<T> extends ValueBase {
 		this.array = [];
 	}
 
+	override function __setup(transaction:Transaction, dbChanges:DbChanges) {
+		__transaction = transaction;
+		__dbChanges = dbChanges;
+		if (helper != null) {
+			for (value in array) {
+				helper.setup(value, transaction, dbChanges);
+			}
+		}
+	}
+
 	inline function __setHelpers(helper:Helper<T>) {
 		this.helper = helper;
 	}

@@ -7,5 +7,6 @@ package classy.core;
 interface Helper<T> {
 	function link(value:T, parent:ValueBase, name:String):Void;
 	function unlink(value:T):Void;
+	function setup(value:T, transaction:Transaction, dbChanges:DbChanges):Void;
 	@:pure function toRawValue(value:T):RawValue;
 }
