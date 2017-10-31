@@ -4,16 +4,29 @@ import classy.core.DbChanges;
 
 enum MyEnum {
 	A;
-	B(a:Int);
-	C(a:Int, b:Player);
+	B(v:Int);
+	C(v:Player);
+	// B(a:Int);
+	// C(a:Int, b:Player);
+	// D(e:MyEnum2);
+}
+
+enum MyEnum2 {
+	A(v:Some);
 }
 
 class Player extends Value {
 	public var some:String;
+	public function new() some = "Hi";
+}
+
+class Some extends Value {
+	public var some:String;
+	public function new() some = "Hi";
 }
 
 class GameData extends Value {
-	var value:MyEnum;
+	public var value:MyEnum;
 
 	public function new() {}
 
@@ -35,6 +48,18 @@ class Main {
 		var dbChanges = new DbChanges();
 		data.setup(transaction, dbChanges);
 
-		trace(haxe.Json.stringify(data.toRawValue()));
+		var player = new Player();
+		data.value = A;
+
+		// data.value = C(10, player);
+		// player.some = "hi";
+
+		// var some = new Some();
+		// data.value = D(A(some));
+		// some.some = "LOL";
+
+		for (change in dbChanges.commit())
+			trace(haxe.Json.stringify(change));
+		// trace(haxe.Json.stringify(data.toRawValue()));
 	}
 }

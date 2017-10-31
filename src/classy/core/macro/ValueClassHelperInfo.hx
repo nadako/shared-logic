@@ -16,6 +16,10 @@ class ValueClassHelperInfo implements HelperInfo {
 		this.appliedParams = appliedParams;
 	}
 
+	public function needsLinking():Bool {
+		return true;
+	}
+
 	public function helperExpr():Expr {
 		return macro classy.core.ValueHelper.get();
 	}
@@ -27,7 +31,7 @@ class ValueClassHelperInfo implements HelperInfo {
 	}
 
 	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr, pos:Position):Expr {
-		var linkExpr = macro $valueExpr.__link($parentExpr, $nameExpr);
+		var linkExpr = macro @:privateAccess $valueExpr.__link($parentExpr, $nameExpr);
 
 		if (appliedParams.length > 0) {
 			var helperExprs = [];
@@ -45,7 +49,7 @@ class ValueClassHelperInfo implements HelperInfo {
 	}
 
 	public function unlink(valueExpr:Expr):Expr {
-		return macro if ($valueExpr != null) $valueExpr.__unlink();
+		return macro if ($valueExpr != null) @:privateAccess $valueExpr.__unlink();
 	}
 
 	public function setup(valueExpr:Expr, transactionExpr:Expr, dbChangesExpr:Expr):Null<Expr> {
@@ -53,7 +57,7 @@ class ValueClassHelperInfo implements HelperInfo {
 	}
 
 	public function toRaw(valueExpr:Expr, callback:Expr->Expr, noValueCallback:()->Expr):Expr {
-		return macro if ($valueExpr != null) ${callback(macro $valueExpr.__toRawValue())} else ${noValueCallback()};
+		return macro if ($valueExpr != null) ${callback(macro @:privateAccess $valueExpr.__toRawValue())} else ${noValueCallback()};
 	}
 
 	function makeTypeExpr() {
@@ -64,14 +68,14 @@ class ValueClassHelperInfo implements HelperInfo {
 		};
 	}
 
-	public function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String, pos:Position):Expr {
+	public function fromRaw(rawExpr:Expr, pos:Position):Expr {
 		var typeExpr = makeTypeExpr();
-		var args = [macro $rawExpr.$fieldName];
+		var args = [macro $rawExpr];
 		for (t in appliedParams) {
 			var helper = gen.getHelper(t, t, pos);
 			args.push(helper.rawValueConverterExpr());
 		}
-		return macro $instanceExpr.$fieldName = @:privateAccess $typeExpr.__fromRawValue($a{args});
+		return macro @:privateAccess $typeExpr.__fromRawValue($a{args});
 	}
 }
 #end

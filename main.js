@@ -7,16 +7,35 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
+var classy_core_RawValueConverter = function() { };
+classy_core_RawValueConverter.__name__ = true;
 var MyEnum = { __ename__ : true, __constructs__ : ["A","B","C"] };
 MyEnum.A = ["A",0];
 MyEnum.A.toString = $estr;
 MyEnum.A.__enum__ = MyEnum;
-MyEnum.B = function(a) { var $x = ["B",1,a]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
-MyEnum.C = function(a,b) { var $x = ["C",2,a,b]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
+MyEnum.B = function(v) { var $x = ["B",1,v]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
+MyEnum.C = function(v) { var $x = ["C",2,v]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
 var classy_core_ValueBase = function() { };
 classy_core_ValueBase.__name__ = true;
 classy_core_ValueBase.prototype = {
-	__makeFieldPath: function(path) {
+	__link: function(parent,name) {
+		if(this.__parent != null) {
+			throw new js__$Boot_HaxeError("Object is already linked");
+		}
+		this.__parent = parent;
+		this.__name = name;
+		this.__setup(this.__parent.__transaction,this.__parent.__dbChanges);
+	}
+	,__unlink: function() {
+		this.__parent = null;
+		this.__name = null;
+		this.__dbChanges = null;
+	}
+	,__setup: function(transaction,dbChanges) {
+		this.__transaction = transaction;
+		this.__dbChanges = dbChanges;
+	}
+	,__makeFieldPath: function(path) {
 		var object = this;
 		while(object.__parent != null) {
 			path.push(object.__name);
@@ -31,7 +50,9 @@ classy_core_Value.__name__ = true;
 classy_core_Value.__super__ = classy_core_ValueBase;
 classy_core_Value.prototype = $extend(classy_core_ValueBase.prototype,{
 });
-var Player = function() { };
+var Player = function() {
+	this.set_some("Hi");
+};
 Player.__name__ = true;
 Player.__fromRawValue = function(raw) {
 	var instance = Object.create(Player.prototype);
@@ -57,6 +78,13 @@ Player.prototype = $extend(classy_core_Value.prototype,{
 		}
 		return value;
 	}
+	,__toRawValue: function() {
+		var raw = { };
+		if(this.some != null) {
+			raw.some = this.some;
+		}
+		return raw;
+	}
 });
 var GameData = function() {
 };
@@ -66,7 +94,7 @@ GameData.fromRawValue = function(raw) {
 };
 GameData.__fromRawValue = function(raw) {
 	var instance = Object.create(GameData.prototype);
-	instance.set_value(null);
+	instance.set_value(MyEnum_$_$RawValueConverter.instance.fromRawValue(raw.value));
 	return instance;
 };
 GameData.__super__ = classy_core_Value;
@@ -75,6 +103,12 @@ GameData.prototype = $extend(classy_core_Value.prototype,{
 		var _gthis = this;
 		var oldValue = this.value;
 		if(oldValue != value) {
+			if(oldValue != null) {
+				MyEnum_$_$Helper.instance.unlink(oldValue);
+			}
+			if(value != null) {
+				MyEnum_$_$Helper.instance.link(value,this,"value");
+			}
 			this.value = value;
 			if(this.__transaction != null) {
 				this.__transaction.rollbacks.push(function() {
@@ -83,7 +117,7 @@ GameData.prototype = $extend(classy_core_Value.prototype,{
 			}
 			if(this.__dbChanges != null) {
 				var fieldPath = this.__makeFieldPath(["value"]);
-				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value} : { kind : "delete", path : fieldPath});
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : MyEnum_$_$Helper.instance.toRawValue(value)} : { kind : "delete", path : fieldPath});
 			}
 		}
 		return value;
@@ -92,26 +126,111 @@ GameData.prototype = $extend(classy_core_Value.prototype,{
 		this.__transaction = transaction;
 		this.__dbChanges = dbChanges;
 	}
-	,__toRawValue: function() {
-		var raw = { };
-		if(this.value != null) {
-			raw.value = this.value;
-		}
-		return raw;
-	}
 });
 var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
 	var data = GameData.__fromRawValue({ });
-	data.__setup(new classy_core_Transaction(),new classy_core_DbChanges());
-	console.log("Main.hx:38:",JSON.stringify(data.__toRawValue()));
+	var dbChanges = new classy_core_DbChanges();
+	data.__setup(new classy_core_Transaction(),dbChanges);
+	new Player();
+	data.set_value(MyEnum.A);
+	var _g = 0;
+	var _g1 = dbChanges.commit();
+	while(_g < _g1.length) console.log("Main.hx:62:",JSON.stringify(_g1[_g++]));
 };
 Math.__name__ = true;
+var classy_core_Helper = function() { };
+classy_core_Helper.__name__ = true;
+var MyEnum_$_$Helper = function() {
+};
+MyEnum_$_$Helper.__name__ = true;
+MyEnum_$_$Helper.__interfaces__ = [classy_core_Helper];
+MyEnum_$_$Helper.prototype = {
+	link: function(value,parent,name) {
+		switch(value[1]) {
+		case 0:
+			break;
+		case 1:
+			break;
+		case 2:
+			var v = value[2];
+			if(v != null) {
+				v.__link(parent,name + ".v");
+			}
+			break;
+		}
+	}
+	,unlink: function(value) {
+		switch(value[1]) {
+		case 0:
+			break;
+		case 1:
+			break;
+		case 2:
+			var v = value[2];
+			if(v != null) {
+				v.__unlink();
+			}
+			break;
+		}
+	}
+	,toRawValue: function(value) {
+		switch(value[1]) {
+		case 0:
+			return "A";
+		case 1:
+			var raw = { "$tag" : "B"};
+			raw.v = value[2];
+			return raw;
+		case 2:
+			var v = value[2];
+			var raw1 = { "$tag" : "C"};
+			if(v != null) {
+				raw1.v = v.__toRawValue();
+			}
+			return raw1;
+		}
+	}
+};
+var MyEnum_$_$RawValueConverter = function() {
+};
+MyEnum_$_$RawValueConverter.__name__ = true;
+MyEnum_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
+MyEnum_$_$RawValueConverter.prototype = {
+	fromRawValue: function(raw) {
+		switch(Reflect.field(raw,"$tag")) {
+		case "A":
+			return MyEnum.A;
+		case "B":
+			return MyEnum.B(raw.v);
+		case "C":
+			return MyEnum.C(Player.__fromRawValue(raw.v));
+		default:
+			throw new js__$Boot_HaxeError("Unknown enum tag");
+		}
+	}
+};
+var Reflect = function() { };
+Reflect.__name__ = true;
+Reflect.field = function(o,field) {
+	try {
+		return o[field];
+	} catch( e ) {
+		return null;
+	}
+};
 var classy_core_DbChanges = function() {
 	this.changes = [];
 };
 classy_core_DbChanges.__name__ = true;
+classy_core_DbChanges.prototype = {
+	commit: function() {
+		var committedChanges = this.changes;
+		this.changes = [];
+		return committedChanges;
+	}
+};
 var classy_core_Transaction = function() {
 	this.rollbacks = [];
 };
@@ -224,5 +343,7 @@ js_Boot.__string_rec = function(o,s) {
 };
 String.__name__ = true;
 Array.__name__ = true;
+MyEnum_$_$Helper.instance = new MyEnum_$_$Helper();
+MyEnum_$_$RawValueConverter.instance = new MyEnum_$_$RawValueConverter();
 Main.main();
 })();

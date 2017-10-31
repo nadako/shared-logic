@@ -52,8 +52,8 @@ class ValueMacro {
 					var toRawExpr = helper.toRaw(macro this.$fieldName, rawValueExpr -> macro raw.$fieldName = $rawValueExpr, () -> macro {});
 					toRawExprs.push(toRawExpr);
 
-					var fromRawExpr = helper.fromRaw(macro raw, macro instance, fieldName, field.pos);
-					fromRawExprs.push(fromRawExpr);
+					var fromRawExpr = helper.fromRaw(macro raw.$fieldName, field.pos);
+					fromRawExprs.push(macro instance.$fieldName = $fromRawExpr);
 
 					var dbChangeExpr = helper.toRaw(
 						macro value,

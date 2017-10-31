@@ -10,6 +10,7 @@ class BasicTypeHelperInfo implements HelperInfo {
 
 	public function new(nullable) this.nullable = nullable;
 
+	public function needsLinking():Bool return false;
 	public function helperExpr():Expr return macro null;
 	public function rawValueConverterExpr():Expr return macro null;
 	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr, pos:Position):Expr return macro {};
@@ -24,9 +25,8 @@ class BasicTypeHelperInfo implements HelperInfo {
 		}
 	}
 
-	public function fromRaw(rawExpr:Expr, instanceExpr:Expr, fieldName:String, pos:Position):Expr {
-		// TODO: handle weird JS fields like `constructor`
-		return macro $instanceExpr.$fieldName = $rawExpr.$fieldName;
+	public function fromRaw(rawExpr:Expr, pos:Position):Expr {
+		return rawExpr;
 	}
 }
 #end
