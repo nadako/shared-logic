@@ -55,16 +55,9 @@ class Main {
 		var dbChanges = new DbChanges();
 		data.setup(transaction, dbChanges);
 
-		// var player = new Player();
-		// data.value = A;
-
-		// data.value = C(10, player);
-		// player.some = "hi";
-
 		var some = new Some();
-		data.arr.push(D(B(some)));
-		// data.data = new Data();
-		// data.data.value = D(A(some));
+		data.arr.push(A);
+		data.arr[0] = D(B(some));
 		some.some = "LOL";
 
 		for (change in dbChanges.commit())

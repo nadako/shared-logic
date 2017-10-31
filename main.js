@@ -296,6 +296,33 @@ StringTools.trim = function(s) {
 StringTools.replace = function(s,sub,by) {
 	return s.split(sub).join(by);
 };
+var TestArrayValue = function() {
+};
+TestArrayValue.__name__ = ["TestArrayValue"];
+TestArrayValue.prototype = {
+	setup: function() {
+	}
+	,teardown: function() {
+	}
+	,testBasicFunctions: function() {
+		var a = new classy_core_ArrayValueImpl();
+		a.push(10);
+		a.push(20);
+		utest_Assert.equals(2,a.array.length,null,{ fileName : "TestArrayValue.hx", lineNumber : 18, className : "TestArrayValue", methodName : "testBasicFunctions"});
+		a.pop();
+		utest_Assert.equals(1,a.array.length,null,{ fileName : "TestArrayValue.hx", lineNumber : 20, className : "TestArrayValue", methodName : "testBasicFunctions"});
+		a.push(30);
+		a.set(0,20);
+		utest_Assert.equals(20,a.array[0],null,{ fileName : "TestArrayValue.hx", lineNumber : 23, className : "TestArrayValue", methodName : "testBasicFunctions"});
+		var _g = [];
+		var arr = a.array;
+		var _g1_length = arr.length;
+		var _g1_index = 0;
+		while(_g1_index < _g1_length) _g.push(arr[_g1_index++]);
+		utest_Assert.same([20,30],_g,null,null,null,{ fileName : "TestArrayValue.hx", lineNumber : 24, className : "TestArrayValue", methodName : "testBasicFunctions"});
+	}
+	,__class__: TestArrayValue
+};
 var TestDbChanges = function() {
 };
 TestDbChanges.__name__ = ["TestDbChanges"];
@@ -324,7 +351,7 @@ TestDbChanges.prototype = {
 var TestMain = function() { };
 TestMain.__name__ = ["TestMain"];
 TestMain.main = function() {
-	var cases = [new TestTransaction(),new TestDbChanges(),new TestValueSimple(),new TestValueNested()];
+	var cases = [new TestTransaction(),new TestDbChanges(),new TestValueSimple(),new TestValueNested(),new TestArrayValue()];
 	var runner = new utest_Runner();
 	var _g = 0;
 	while(_g < cases.length) runner.addCase(cases[_g++]);
@@ -847,12 +874,26 @@ Type["typeof"] = function(v) {
 		return ValueType.TUnknown;
 	}
 };
-var classy_core_ArrayValue = function() {
+var classy_core__$ArrayValue_ArrayValue_$Impl_$ = {};
+classy_core__$ArrayValue_ArrayValue_$Impl_$.__name__ = ["classy","core","_ArrayValue","ArrayValue_Impl_"];
+classy_core__$ArrayValue_ArrayValue_$Impl_$._new = function() {
+	return new classy_core_ArrayValueImpl();
+};
+classy_core__$ArrayValue_ArrayValue_$Impl_$.get = function(this1,index) {
+	return this1.array[index];
+};
+classy_core__$ArrayValue_ArrayValue_$Impl_$.set = function(this1,index,value) {
+	return this1.set(index,value);
+};
+classy_core__$ArrayValue_ArrayValue_$Impl_$.iterator = function(this1) {
+	return new classy_core__$ArrayValue_ArrayIterator(this1.array);
+};
+var classy_core_ArrayValueImpl = function() {
 	this.array = [];
 };
-classy_core_ArrayValue.__name__ = ["classy","core","ArrayValue"];
-classy_core_ArrayValue.__fromRawValue = function(raw,converter) {
-	var instance = new classy_core_ArrayValue();
+classy_core_ArrayValueImpl.__name__ = ["classy","core","ArrayValueImpl"];
+classy_core_ArrayValueImpl.__fromRawValue = function(raw,converter) {
+	var instance = new classy_core_ArrayValueImpl();
 	var _g = 0;
 	var _g1 = raw;
 	while(_g < _g1.length) {
@@ -862,15 +903,39 @@ classy_core_ArrayValue.__fromRawValue = function(raw,converter) {
 	}
 	return instance;
 };
-classy_core_ArrayValue.__super__ = classy_core_ValueBase;
-classy_core_ArrayValue.prototype = $extend(classy_core_ValueBase.prototype,{
+classy_core_ArrayValueImpl.__super__ = classy_core_ValueBase;
+classy_core_ArrayValueImpl.prototype = $extend(classy_core_ValueBase.prototype,{
 	array: null
 	,helper: null
+	,get_length: function() {
+		return this.array.length;
+	}
 	,__setHelpers: function(helper) {
 		this.helper = helper;
 	}
-	,get: function(index) {
-		return this.array[index];
+	,set: function(index,value) {
+		var _gthis = this;
+		if(index < 0 || index >= this.array.length) {
+			throw new js__$Boot_HaxeError("Out of bounds");
+		}
+		var oldValue = this.array[index];
+		if(oldValue != value) {
+			var name = "" + index;
+			if(this.helper != null) {
+				this.helper.unlink(oldValue);
+				this.helper.link(value,this,name);
+			}
+			this.array[index] = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.array[index] = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				this.__dbChanges.changes.push({ kind : "set", path : this.__makeFieldPath([name]), value : this.helper != null ? this.helper.toRawValue(value) : value});
+			}
+		}
+		return value;
 	}
 	,push: function(value) {
 		var _gthis = this;
@@ -917,8 +982,26 @@ classy_core_ArrayValue.prototype = $extend(classy_core_ValueBase.prototype,{
 		}
 		return raw;
 	}
-	,__class__: classy_core_ArrayValue
+	,__class__: classy_core_ArrayValueImpl
 });
+var classy_core__$ArrayValue_ArrayIterator = function(arr) {
+	this.array = arr;
+	this.length = arr.length;
+	this.index = 0;
+};
+classy_core__$ArrayValue_ArrayIterator.__name__ = ["classy","core","_ArrayValue","ArrayIterator"];
+classy_core__$ArrayValue_ArrayIterator.prototype = {
+	array: null
+	,length: null
+	,index: null
+	,hasNext: function() {
+		return this.index < this.length;
+	}
+	,next: function() {
+		return this.array[this.index++];
+	}
+	,__class__: classy_core__$ArrayValue_ArrayIterator
+};
 var classy_core__$DbChange_DbChange_$Impl_$ = {};
 classy_core__$DbChange_DbChange_$Impl_$.__name__ = ["classy","core","_DbChange","DbChange_Impl_"];
 classy_core__$DbChange_DbChange_$Impl_$.set = function(path,value) {

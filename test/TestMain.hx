@@ -8,6 +8,7 @@ class TestMain {
 			new TestDbChanges(),
 			new TestValueSimple(),
 			new TestValueNested(),
+			new TestArrayValue(),
 		];
 		var runner = new Runner();
 		for (c in cases)
