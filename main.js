@@ -612,6 +612,21 @@ TestValueNested.prototype = {
 		var tmp = data.toRaw();
 		utest_Assert.same({ player : { resources : { gold : 300, real : 500}}},tmp,null,null,null,{ fileName : "TestValueNested.hx", lineNumber : 59, className : "TestValueNested", methodName : "testToRawValue"});
 	}
+	,testTransaction: function() {
+		var data = new GameData();
+		var t = new classy_core_Transaction();
+		data.setup(t,null);
+		data.player.resources.set_gold(30);
+		t.rollback();
+		utest_Assert.equals(0,data.player.resources.gold,null,{ fileName : "TestValueNested.hx", lineNumber : 80, className : "TestValueNested", methodName : "testTransaction"});
+		var resources = data.player.resources;
+		data.player.set_resources(null);
+		resources.set_real(500);
+		t.rollback();
+		utest_Assert.equals(0,data.player.resources.real,null,{ fileName : "TestValueNested.hx", lineNumber : 86, className : "TestValueNested", methodName : "testTransaction"});
+		utest_Assert.equals(0,resources.real,null,{ fileName : "TestValueNested.hx", lineNumber : 87, className : "TestValueNested", methodName : "testTransaction"});
+		utest_Assert.same(resources,data.player.resources,null,null,null,{ fileName : "TestValueNested.hx", lineNumber : 88, className : "TestValueNested", methodName : "testTransaction"});
+	}
 	,__class__: TestValueNested
 };
 var Player = function() {

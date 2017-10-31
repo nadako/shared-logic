@@ -68,4 +68,23 @@ class TestValueNested {
 			data.toRaw()
 		);
 	}
+
+	public function testTransaction() {
+		var data = new GameData();
+
+		var t = new Transaction();
+		data.setup(t, null);
+
+		data.player.resources.gold = 30;
+		t.rollback();
+		equals(0, data.player.resources.gold);
+
+		var resources = data.player.resources;
+		data.player.resources = null;
+		resources.real = 500;
+		t.rollback();
+		equals(0, data.player.resources.real);
+		equals(0, resources.real);
+		same(resources, data.player.resources);
+	}
 }
