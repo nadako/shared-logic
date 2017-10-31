@@ -7,6 +7,7 @@ class TestMain {
 			new TestTransaction(),
 			new TestDbChanges(),
 			new TestValueSimple(),
+			new TestValueNested(),
 		];
 		var runner = new Runner();
 		for (c in cases)

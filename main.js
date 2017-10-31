@@ -32,6 +32,25 @@ EReg.prototype = {
 	}
 	,__class__: EReg
 };
+var classy_core_RawValueConverter = function() { };
+classy_core_RawValueConverter.__name__ = ["classy","core","RawValueConverter"];
+classy_core_RawValueConverter.prototype = {
+	fromRawValue: null
+	,__class__: classy_core_RawValueConverter
+};
+var GameData_$_$RawValueConverter = function() {
+};
+GameData_$_$RawValueConverter.__name__ = ["GameData__RawValueConverter"];
+GameData_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
+GameData_$_$RawValueConverter.get = function() {
+	return GameData_$_$RawValueConverter.instance;
+};
+GameData_$_$RawValueConverter.prototype = {
+	fromRawValue: function(raw) {
+		return GameData.__fromRawValue(raw);
+	}
+	,__class__: GameData_$_$RawValueConverter
+};
 var HxOverrides = function() { };
 HxOverrides.__name__ = ["HxOverrides"];
 HxOverrides.strDate = function(s) {
@@ -106,11 +125,18 @@ Lambda.has = function(it,elt) {
 	return false;
 };
 Math.__name__ = ["Math"];
-var classy_core_RawValueConverter = function() { };
-classy_core_RawValueConverter.__name__ = ["classy","core","RawValueConverter"];
-classy_core_RawValueConverter.prototype = {
-	fromRawValue: null
-	,__class__: classy_core_RawValueConverter
+var PlayerData_$_$RawValueConverter = function() {
+};
+PlayerData_$_$RawValueConverter.__name__ = ["PlayerData__RawValueConverter"];
+PlayerData_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
+PlayerData_$_$RawValueConverter.get = function() {
+	return PlayerData_$_$RawValueConverter.instance;
+};
+PlayerData_$_$RawValueConverter.prototype = {
+	fromRawValue: function(raw) {
+		return PlayerData.__fromRawValue(raw);
+	}
+	,__class__: PlayerData_$_$RawValueConverter
 };
 var Player_$_$RawValueConverter = function() {
 };
@@ -190,6 +216,19 @@ Reflect.isObject = function(v) {
 	} else {
 		return true;
 	}
+};
+var Resources_$_$RawValueConverter = function() {
+};
+Resources_$_$RawValueConverter.__name__ = ["Resources__RawValueConverter"];
+Resources_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
+Resources_$_$RawValueConverter.get = function() {
+	return Resources_$_$RawValueConverter.instance;
+};
+Resources_$_$RawValueConverter.prototype = {
+	fromRawValue: function(raw) {
+		return Resources.__fromRawValue(raw);
+	}
+	,__class__: Resources_$_$RawValueConverter
 };
 var Std = function() { };
 Std.__name__ = ["Std"];
@@ -285,7 +324,7 @@ TestDbChanges.prototype = {
 var TestMain = function() { };
 TestMain.__name__ = ["TestMain"];
 TestMain.main = function() {
-	var cases = [new TestTransaction(),new TestDbChanges(),new TestValueSimple()];
+	var cases = [new TestTransaction(),new TestDbChanges(),new TestValueSimple(),new TestValueNested()];
 	var runner = new utest_Runner();
 	var _g = 0;
 	while(_g < cases.length) runner.addCase(cases[_g++]);
@@ -385,6 +424,196 @@ classy_core_Value.__super__ = classy_core_ValueBase;
 classy_core_Value.prototype = $extend(classy_core_ValueBase.prototype,{
 	__class__: classy_core_Value
 });
+var GameData = function() {
+	this.set_player(new PlayerData());
+};
+GameData.__name__ = ["GameData"];
+GameData.fromRaw = function(raw) {
+	return GameData.__fromRawValue(raw);
+};
+GameData.__fromRawValue = function(raw) {
+	var instance = Object.create(GameData.prototype);
+	instance.set_player(PlayerData.__fromRawValue(raw.player));
+	return instance;
+};
+GameData.__super__ = classy_core_Value;
+GameData.prototype = $extend(classy_core_Value.prototype,{
+	player: null
+	,setup: function(transaction,dbChanges) {
+		this.__setup(transaction,dbChanges);
+	}
+	,toRaw: function() {
+		return this.__toRawValue();
+	}
+	,set_player: function(value) {
+		var _gthis = this;
+		var oldValue = this.player;
+		if(oldValue != value) {
+			if(oldValue != null) {
+				oldValue.__unlink();
+			}
+			if(value != null) {
+				value.__link(this,"player");
+			}
+			this.player = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.player = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				var fieldPath = this.__makeFieldPath(["player"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value.__toRawValue()} : { kind : "delete", path : fieldPath});
+			}
+		}
+		return value;
+	}
+	,__setup: function(transaction,dbChanges) {
+		this.__transaction = transaction;
+		this.__dbChanges = dbChanges;
+		if(this.player != null) {
+			this.player.__setup(transaction,dbChanges);
+		}
+	}
+	,__toRawValue: function() {
+		var raw = { };
+		if(this.player != null) {
+			raw.player = this.player.__toRawValue();
+		}
+		return raw;
+	}
+	,__class__: GameData
+});
+var PlayerData = function() {
+	this.set_resources(new Resources());
+};
+PlayerData.__name__ = ["PlayerData"];
+PlayerData.__fromRawValue = function(raw) {
+	var instance = Object.create(PlayerData.prototype);
+	instance.set_resources(Resources.__fromRawValue(raw.resources));
+	return instance;
+};
+PlayerData.__super__ = classy_core_Value;
+PlayerData.prototype = $extend(classy_core_Value.prototype,{
+	resources: null
+	,set_resources: function(value) {
+		var _gthis = this;
+		var oldValue = this.resources;
+		if(oldValue != value) {
+			if(oldValue != null) {
+				oldValue.__unlink();
+			}
+			if(value != null) {
+				value.__link(this,"resources");
+			}
+			this.resources = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.resources = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				var fieldPath = this.__makeFieldPath(["resources"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value.__toRawValue()} : { kind : "delete", path : fieldPath});
+			}
+		}
+		return value;
+	}
+	,__setup: function(transaction,dbChanges) {
+		this.__transaction = transaction;
+		this.__dbChanges = dbChanges;
+		if(this.resources != null) {
+			this.resources.__setup(transaction,dbChanges);
+		}
+	}
+	,__toRawValue: function() {
+		var raw = { };
+		if(this.resources != null) {
+			raw.resources = this.resources.__toRawValue();
+		}
+		return raw;
+	}
+	,__class__: PlayerData
+});
+var Resources = function() {
+	this.set_gold(this.set_real(0));
+};
+Resources.__name__ = ["Resources"];
+Resources.__fromRawValue = function(raw) {
+	var instance = Object.create(Resources.prototype);
+	instance.set_gold(raw.gold);
+	instance.set_real(raw.real);
+	return instance;
+};
+Resources.__super__ = classy_core_Value;
+Resources.prototype = $extend(classy_core_Value.prototype,{
+	gold: null
+	,real: null
+	,set_gold: function(value) {
+		var _gthis = this;
+		var oldValue = this.gold;
+		if(oldValue != value) {
+			this.gold = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.gold = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				this.__dbChanges.changes.push({ kind : "set", path : this.__makeFieldPath(["gold"]), value : value});
+			}
+		}
+		return value;
+	}
+	,set_real: function(value) {
+		var _gthis = this;
+		var oldValue = this.real;
+		if(oldValue != value) {
+			this.real = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.real = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				this.__dbChanges.changes.push({ kind : "set", path : this.__makeFieldPath(["real"]), value : value});
+			}
+		}
+		return value;
+	}
+	,__toRawValue: function() {
+		var raw = { };
+		raw.gold = this.gold;
+		raw.real = this.real;
+		return raw;
+	}
+	,__class__: Resources
+});
+var TestValueNested = function() {
+};
+TestValueNested.__name__ = ["TestValueNested"];
+TestValueNested.prototype = {
+	setup: function() {
+	}
+	,teardown: function() {
+	}
+	,testFromRawValue: function() {
+		var data = GameData.fromRaw({ player : { resources : { gold : 100, real : 500}}});
+		utest_Assert.is(data,GameData,null,{ fileName : "TestValueNested.hx", lineNumber : 48, className : "TestValueNested", methodName : "testFromRawValue"});
+		utest_Assert.is(data.player,PlayerData,null,{ fileName : "TestValueNested.hx", lineNumber : 49, className : "TestValueNested", methodName : "testFromRawValue"});
+		utest_Assert.is(data.player.resources,Resources,null,{ fileName : "TestValueNested.hx", lineNumber : 50, className : "TestValueNested", methodName : "testFromRawValue"});
+		utest_Assert.equals(data.player.resources.gold,100,null,{ fileName : "TestValueNested.hx", lineNumber : 51, className : "TestValueNested", methodName : "testFromRawValue"});
+		utest_Assert.equals(data.player.resources.real,500,null,{ fileName : "TestValueNested.hx", lineNumber : 52, className : "TestValueNested", methodName : "testFromRawValue"});
+	}
+	,testToRawValue: function() {
+		var data = new GameData();
+		data.player.resources.set_gold(300);
+		data.player.resources.set_real(500);
+		var tmp = data.toRaw();
+		utest_Assert.same({ player : { resources : { gold : 300, real : 500}}},tmp,null,null,null,{ fileName : "TestValueNested.hx", lineNumber : 59, className : "TestValueNested", methodName : "testToRawValue"});
+	}
+	,__class__: TestValueNested
+};
 var Player = function() {
 };
 Player.__name__ = ["Player"];
@@ -722,6 +951,25 @@ classy_core_Transaction.prototype = {
 		this.rollbacks = [];
 	}
 	,__class__: classy_core_Transaction
+};
+var classy_core_ValueHelper = function() {
+};
+classy_core_ValueHelper.__name__ = ["classy","core","ValueHelper"];
+classy_core_ValueHelper.__interfaces__ = [classy_core_Helper];
+classy_core_ValueHelper.get = function() {
+	return classy_core_ValueHelper.instance;
+};
+classy_core_ValueHelper.prototype = {
+	link: function(value,parent,name) {
+		value.__link(parent,name);
+	}
+	,unlink: function(value) {
+		value.__unlink();
+	}
+	,toRawValue: function(value) {
+		return value.__toRawValue();
+	}
+	,__class__: classy_core_ValueHelper
 };
 var haxe_StackItem = { __ename__ : ["haxe","StackItem"], __constructs__ : ["CFunction","Module","FilePos","Method","LocalFunction"] };
 haxe_StackItem.CFunction = ["CFunction",0];
@@ -3185,7 +3433,11 @@ var Bool = Boolean;
 var Class = { };
 var Enum = { };
 var __map_reserved = {};
+GameData_$_$RawValueConverter.instance = new GameData_$_$RawValueConverter();
+PlayerData_$_$RawValueConverter.instance = new PlayerData_$_$RawValueConverter();
 Player_$_$RawValueConverter.instance = new Player_$_$RawValueConverter();
+Resources_$_$RawValueConverter.instance = new Resources_$_$RawValueConverter();
+classy_core_ValueHelper.instance = new classy_core_ValueHelper();
 js_Boot.__toStr = ({ }).toString;
 utest_TestHandler.POLLING_TIME = 10;
 TestMain.main();
