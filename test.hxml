@@ -1,0 +1,16 @@
+-cp src
+-cp test
+-main TestMain
+-D analyzer-optimize
+-lib utest
+
+--each
+
+-lib hxnodejs
+-js bin/test.js
+-cmd node bin/test.js
+
+--next
+
+-cs bin/test_cs
+-cmd bin\test_cs\bin\TestMain.exe
