@@ -106,6 +106,25 @@ Lambda.has = function(it,elt) {
 	return false;
 };
 Math.__name__ = ["Math"];
+var classy_core_RawValueConverter = function() { };
+classy_core_RawValueConverter.__name__ = ["classy","core","RawValueConverter"];
+classy_core_RawValueConverter.prototype = {
+	fromRawValue: null
+	,__class__: classy_core_RawValueConverter
+};
+var Player_$_$RawValueConverter = function() {
+};
+Player_$_$RawValueConverter.__name__ = ["Player__RawValueConverter"];
+Player_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
+Player_$_$RawValueConverter.get = function() {
+	return Player_$_$RawValueConverter.instance;
+};
+Player_$_$RawValueConverter.prototype = {
+	fromRawValue: function(raw) {
+		return Player.__fromRawValue(raw);
+	}
+	,__class__: Player_$_$RawValueConverter
+};
 var Reflect = function() { };
 Reflect.__name__ = ["Reflect"];
 Reflect.field = function(o,field) {
@@ -266,7 +285,7 @@ TestDbChanges.prototype = {
 var TestMain = function() { };
 TestMain.__name__ = ["TestMain"];
 TestMain.main = function() {
-	var cases = [new TestTransaction(),new TestDbChanges()];
+	var cases = [new TestTransaction(),new TestDbChanges(),new TestValue()];
 	var runner = new utest_Runner();
 	var _g = 0;
 	while(_g < cases.length) runner.addCase(cases[_g++]);
@@ -314,6 +333,159 @@ TestTransaction.prototype = {
 		utest_Assert.equals(2,value,null,{ fileName : "TestTransaction.hx", lineNumber : 30, className : "TestTransaction", methodName : "test"});
 	}
 	,__class__: TestTransaction
+};
+var classy_core_ValueBase = function() { };
+classy_core_ValueBase.__name__ = ["classy","core","ValueBase"];
+classy_core_ValueBase.prototype = {
+	__parent: null
+	,__name: null
+	,__transaction: null
+	,__dbChanges: null
+	,__link: function(parent,name) {
+		if(this.__parent != null) {
+			throw new js__$Boot_HaxeError("Object is already linked");
+		}
+		this.__parent = parent;
+		this.__name = name;
+		this.__setup(this.__parent.__transaction,this.__parent.__dbChanges);
+	}
+	,__unlink: function() {
+		this.__parent = null;
+		this.__name = null;
+		this.__dbChanges = null;
+	}
+	,__setup: function(transaction,dbChanges) {
+		this.__transaction = transaction;
+		this.__dbChanges = dbChanges;
+	}
+	,__toRawValue: function() {
+		return { };
+	}
+	,__makeFieldPath: function(path) {
+		var object = this;
+		while(object.__parent != null) {
+			var name = object.__name;
+			var end = name.length;
+			var i = name.length;
+			while(i-- > 0) if(name.charCodeAt(i) == 46) {
+				path.push(name.substring(i + 1,end));
+				end = i;
+			}
+			path.push(name.substring(0,end));
+			object = object.__parent;
+		}
+		path.reverse();
+		return path;
+	}
+	,__class__: classy_core_ValueBase
+};
+var classy_core_Value = function() { };
+classy_core_Value.__name__ = ["classy","core","Value"];
+classy_core_Value.__super__ = classy_core_ValueBase;
+classy_core_Value.prototype = $extend(classy_core_ValueBase.prototype,{
+	__class__: classy_core_Value
+});
+var Player = function() {
+};
+Player.__name__ = ["Player"];
+Player.__fromRawValue = function(raw) {
+	var instance = Object.create(Player.prototype);
+	instance.set_name(raw.name);
+	instance.set_level(raw.level);
+	return instance;
+};
+Player.__super__ = classy_core_Value;
+Player.prototype = $extend(classy_core_Value.prototype,{
+	name: null
+	,level: null
+	,setup: function(transaction,dbChanges) {
+		this.__setup(transaction,dbChanges);
+	}
+	,set_name: function(value) {
+		var _gthis = this;
+		var oldValue = this.name;
+		if(oldValue != value) {
+			this.name = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.name = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				var fieldPath = this.__makeFieldPath(["name"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value} : { kind : "delete", path : fieldPath});
+			}
+		}
+		return value;
+	}
+	,set_level: function(value) {
+		var _gthis = this;
+		var oldValue = this.level;
+		if(oldValue != value) {
+			this.level = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.level = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				this.__dbChanges.changes.push({ kind : "set", path : this.__makeFieldPath(["level"]), value : value});
+			}
+		}
+		return value;
+	}
+	,__toRawValue: function() {
+		var raw = { };
+		if(this.name != null) {
+			raw.name = this.name;
+		}
+		raw.level = this.level;
+		return raw;
+	}
+	,__class__: Player
+});
+var TestValue = function() {
+};
+TestValue.__name__ = ["TestValue"];
+TestValue.prototype = {
+	setup: function() {
+	}
+	,teardown: function() {
+	}
+	,testUnset: function() {
+		var player = new Player();
+		player.set_name("John");
+		player.set_level(42);
+		utest_Assert.equals("John",player.name,null,{ fileName : "TestValue.hx", lineNumber : 24, className : "TestValue", methodName : "testUnset"});
+		utest_Assert.equals(42,player.level,null,{ fileName : "TestValue.hx", lineNumber : 25, className : "TestValue", methodName : "testUnset"});
+	}
+	,testTransaction: function() {
+		var player = new Player();
+		player.set_name("John");
+		player.set_level(42);
+		var t = new classy_core_Transaction();
+		player.setup(t,null);
+		player.set_name("Mary");
+		t.rollbacks = [];
+		utest_Assert.equals("Mary",player.name,null,{ fileName : "TestValue.hx", lineNumber : 37, className : "TestValue", methodName : "testTransaction"});
+		player.set_level(player.level + 1);
+		player.set_name(null);
+		t.rollback();
+		utest_Assert.equals(42,player.level,null,{ fileName : "TestValue.hx", lineNumber : 42, className : "TestValue", methodName : "testTransaction"});
+		utest_Assert.equals("Mary",player.name,null,{ fileName : "TestValue.hx", lineNumber : 43, className : "TestValue", methodName : "testTransaction"});
+	}
+	,testChanges: function() {
+		var changes = new classy_core_DbChanges();
+		var player = new Player();
+		player.setup(null,changes);
+		player.set_name("John");
+		player.set_level(42);
+		player.set_name(null);
+		player.set_level(player.level + 1);
+		var tmp = changes.commit();
+		utest_Assert.same([{ kind : "set", path : ["name"], value : "John"},{ kind : "set", path : ["level"], value : 42},{ kind : "delete", path : ["name"]},{ kind : "set", path : ["level"], value : 43}],tmp,null,null,null,{ fileName : "TestValue.hx", lineNumber : 56, className : "TestValue", methodName : "testChanges"});
+	}
+	,__class__: TestValue
 };
 var ValueType = { __ename__ : ["ValueType"], __constructs__ : ["TNull","TInt","TFloat","TBool","TObject","TFunction","TClass","TEnum","TUnknown"] };
 ValueType.TNull = ["TNull",0];
@@ -399,51 +571,6 @@ Type["typeof"] = function(v) {
 	default:
 		return ValueType.TUnknown;
 	}
-};
-var classy_core_ValueBase = function() { };
-classy_core_ValueBase.__name__ = ["classy","core","ValueBase"];
-classy_core_ValueBase.prototype = {
-	__parent: null
-	,__name: null
-	,__transaction: null
-	,__dbChanges: null
-	,__link: function(parent,name) {
-		if(this.__parent != null) {
-			throw new js__$Boot_HaxeError("Object is already linked");
-		}
-		this.__parent = parent;
-		this.__name = name;
-		this.__setup(this.__parent.__transaction,this.__parent.__dbChanges);
-	}
-	,__unlink: function() {
-		this.__parent = null;
-		this.__name = null;
-		this.__dbChanges = null;
-	}
-	,__setup: function(transaction,dbChanges) {
-		this.__transaction = transaction;
-		this.__dbChanges = dbChanges;
-	}
-	,__toRawValue: function() {
-		return { };
-	}
-	,__makeFieldPath: function(path) {
-		var object = this;
-		while(object.__parent != null) {
-			var name = object.__name;
-			var end = name.length;
-			var i = name.length;
-			while(i-- > 0) if(name.charCodeAt(i) == 46) {
-				path.push(name.substring(i + 1,end));
-				end = i;
-			}
-			path.push(name.substring(0,end));
-			object = object.__parent;
-		}
-		path.reverse();
-		return path;
-	}
-	,__class__: classy_core_ValueBase
 };
 var classy_core_ArrayValue = function() {
 	this.array = [];
@@ -558,12 +685,6 @@ classy_core_Helper.prototype = {
 	,toRawValue: null
 	,__class__: classy_core_Helper
 };
-var classy_core_RawValueConverter = function() { };
-classy_core_RawValueConverter.__name__ = ["classy","core","RawValueConverter"];
-classy_core_RawValueConverter.prototype = {
-	fromRawValue: null
-	,__class__: classy_core_RawValueConverter
-};
 var classy_core_Transaction = function() {
 	this.rollbacks = [];
 };
@@ -583,12 +704,6 @@ classy_core_Transaction.prototype = {
 	}
 	,__class__: classy_core_Transaction
 };
-var classy_core_Value = function() { };
-classy_core_Value.__name__ = ["classy","core","Value"];
-classy_core_Value.__super__ = classy_core_ValueBase;
-classy_core_Value.prototype = $extend(classy_core_ValueBase.prototype,{
-	__class__: classy_core_Value
-});
 var haxe_StackItem = { __ename__ : ["haxe","StackItem"], __constructs__ : ["CFunction","Module","FilePos","Method","LocalFunction"] };
 haxe_StackItem.CFunction = ["CFunction",0];
 haxe_StackItem.CFunction.toString = $estr;
@@ -3051,6 +3166,7 @@ var Bool = Boolean;
 var Class = { };
 var Enum = { };
 var __map_reserved = {};
+Player_$_$RawValueConverter.instance = new Player_$_$RawValueConverter();
 js_Boot.__toStr = ({ }).toString;
 utest_TestHandler.POLLING_TIME = 10;
 TestMain.main();

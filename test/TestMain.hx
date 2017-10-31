@@ -6,6 +6,7 @@ class TestMain {
 		var cases:Array<Any> = [
 			new TestTransaction(),
 			new TestDbChanges(),
+			new TestValue(),
 		];
 		var runner = new Runner();
 		for (c in cases)
