@@ -87,4 +87,26 @@ class TestValueNested {
 		equals(0, resources.real);
 		same(resources, data.player.resources);
 	}
+
+	public function testChanges() {
+		var data = new GameData();
+
+		var changes = new DbChanges();
+		data.setup(null, changes);
+
+		data.player.resources.gold = 250;
+		var resources = data.player.resources;
+		data.player.resources = null;
+		resources.gold++;
+		data.player.resources = resources;
+
+		same(
+			[
+				DbChange.set(["player", "resources", "gold"], 250),
+				DbChange.delete(["player", "resources"]),
+				DbChange.set(["player", "resources"], {gold: 251, real: 0}),
+			],
+			changes.commit()
+		);
+	}
 }
