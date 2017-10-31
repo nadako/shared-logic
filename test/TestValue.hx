@@ -8,7 +8,10 @@ class Player extends Value {
 	public var name:String;
 	public var level:Int;
 	public function new() {}
+
 	public function setup(transaction, dbChanges) __setup(transaction, dbChanges);
+	public static function fromRaw(raw) return __fromRawValue(raw);
+	public function toRaw() return __toRawValue();
 }
 
 class TestValue {
@@ -23,6 +26,20 @@ class TestValue {
 		player.level = 42;
 		equals("John", player.name);
 		equals(42, player.level);
+	}
+
+	public function testFromRawValue() {
+		var player = Player.fromRaw({name: "Mary", level: 3});
+		is(player, Player);
+		equals("Mary", player.name);
+		equals(3, player.level);
+	}
+
+	public function testToRawValue() {
+		var player = new Player();
+		player.name = "John";
+		player.level = 42;
+		same({name: "John", level: 42}, player.toRaw());
 	}
 
 	public function testTransaction() {
