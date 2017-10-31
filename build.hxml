@@ -6,6 +6,6 @@
 # -dce full
 -lib utest
 -lib hxnodejs
+# -cs cs_out
 -js main.js
 -cmd node main.js
-# -cs cs_out
