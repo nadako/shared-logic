@@ -1,7 +1,11 @@
 -cp src
--main Main
+-cp test
+# -main Main
+-main TestMain
 -D analyzer-optimize
--dce full
+# -dce full
+-lib utest
+-lib hxnodejs
 -js main.js
 -cmd node main.js
 # -cs cs_out
