@@ -19,6 +19,7 @@ class ValueMacro {
 		var thisTP, thisModule, pos;
 		switch Context.getLocalType() {
 			case TInst(_.get() => cl, _):
+				if (cl.isPrivate) throw new Error("Value subclasses cannot be private", cl.pos);
 				thisTP = getTypePath(cl);
 				thisModule = cl.module;
 				pos = cl.pos;
