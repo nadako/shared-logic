@@ -16,10 +16,9 @@ class EnumHelperInfo implements HelperInfo {
 		this.gen = gen;
 		this.enumType = enumType;
 		this.appliedParams = appliedParams;
-		process();
 	}
 
-	function process() {
+	public function process() {
 		var linkCases = new Array<Case>();
 		var unlinkCases = new Array<Case>();
 		var toRawValueCases = new Array<Case>();

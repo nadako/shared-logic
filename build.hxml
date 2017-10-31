@@ -1,6 +1,7 @@
 -cp src
 -main Main
--js main.js
 -D analyzer-optimize
 -dce full
+-js main.js
 -cmd node main.js
+# -cs cs_out

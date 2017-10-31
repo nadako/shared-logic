@@ -4,15 +4,14 @@ import classy.core.DbChanges;
 
 enum MyEnum {
 	A;
-	B(v:Int);
-	C(v:Player);
-	// B(a:Int);
-	// C(a:Int, b:Player);
+	B(a:Int);
+	C(a:Int, b:Player);
 	D(e:MyEnum2);
 }
 
 enum MyEnum2 {
-	A(v:Some);
+	A;
+	B(v:Some);
 }
 
 class Player extends Value {
@@ -31,7 +30,7 @@ class Data extends Value {
 }
 
 class GameData extends Value {
-	public var data:Data;
+	public var arr:ArrayValue<MyEnum>;
 
 	public function new() {}
 
@@ -46,7 +45,7 @@ class GameData extends Value {
 class Main {
 	static function main() {
 		var raw:RawValue = {
-			data: {value: "A"}
+			arr: [],
 		};
 
 		var data = GameData.fromRawValue(raw);
@@ -63,8 +62,9 @@ class Main {
 		// player.some = "hi";
 
 		var some = new Some();
-		data.data = new Data();
-		data.data.value = D(A(some));
+		data.arr.push(D(B(some)));
+		// data.data = new Data();
+		// data.data.value = D(A(some));
 		some.some = "LOL";
 
 		for (change in dbChanges.commit())

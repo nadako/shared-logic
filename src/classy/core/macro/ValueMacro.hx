@@ -7,13 +7,14 @@ import haxe.macro.Type;
 using haxe.macro.Tools;
 
 class ValueMacro {
+	static var gen = new HelperGenerator(); // TODO: check how this plays with compiler cache
+
 	static function build() {
 		var fields = Context.getBuildFields();
 		var newFields = new Array<Field>();
 		var setupExprs = new Array<Expr>();
 		var toRawExprs = new Array<Expr>();
 		var fromRawExprs = new Array<Expr>();
-		var gen = new HelperGenerator();
 
 		var thisTP, thisModule, pos;
 		switch Context.getLocalType() {

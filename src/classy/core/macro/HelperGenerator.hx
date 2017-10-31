@@ -2,39 +2,60 @@ package classy.core.macro;
 
 #if macro
 import haxe.macro.Expr;
+import haxe.macro.MacroStringTools.toDotPath;
 import haxe.macro.Type;
 using haxe.macro.Tools;
 
 class HelperGenerator {
+	final cache:Map<String,HelperInfo>;
+
 	public function new() {
-		// TODO: add cache here to prevent stack overflows with recursive types and compiler-cache issues
+		cache = new Map();
 	}
 
 	public function getHelper(type:Type, realType:Type, pos:Position):HelperInfo {
 		switch type {
 			case TInst(_.get() => cl, params):
+				var cacheKey = toDotPath(cl.pack, cl.name);
+				var info = cache[cacheKey];
+				if (info != null) return info;
+
 				switch [cl, params] {
 					case [{pack: [], name: "String"}, _]:
-						return new BasicTypeHelperInfo(true);
+						return cache[cacheKey] = new BasicTypeHelperInfo(true);
 					case _ if (isValueClass(cl)):
-						return new ValueClassHelperInfo(this, cl, params);
+						return cache[cacheKey] = new ValueClassHelperInfo(this, cl, params);
 					case _:
 				}
 
 			case TAbstract(_.get() => ab, params):
+				var cacheKey = toDotPath(ab.pack, ab.name);
+				var info = cache[cacheKey];
+				if (info != null) return info;
+
 				switch [ab, params] {
 					case [{pack: [], name: "Bool" | "Int" | "Float"}, _]:
-						return new BasicTypeHelperInfo(false);
+						return cache[cacheKey] = new BasicTypeHelperInfo(false);
 					case _ if (!ab.meta.has(":coreType")):
-						return getHelper(ab.type.applyTypeParameters(ab.params, params), realType, pos);
+						return cache[cacheKey] = getHelper(ab.type.applyTypeParameters(ab.params, params), realType, pos);
 					case _:
 				}
 
 			case TType(_.get() => dt, params):
-				return getHelper(dt.type.applyTypeParameters(dt.params, params), realType, pos);
+				var cacheKey = toDotPath(dt.pack, dt.name);
+				var info = cache[cacheKey];
+				if (info != null) return info;
+
+				return cache[cacheKey] = getHelper(dt.type.applyTypeParameters(dt.params, params), realType, pos);
 
 			case TEnum(_.get() => en, params):
-				return new EnumHelperInfo(this, en, params);
+				var cacheKey = toDotPath(en.pack, en.name);
+				var info = cache[cacheKey];
+				if (info != null) return info;
+				var helper = new EnumHelperInfo(this, en, params);
+				cache[cacheKey] = helper;
+				helper.process();
+				return helper;
 
 			case _:
 		}

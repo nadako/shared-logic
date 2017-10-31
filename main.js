@@ -13,11 +13,14 @@ var MyEnum = { __ename__ : true, __constructs__ : ["A","B","C","D"] };
 MyEnum.A = ["A",0];
 MyEnum.A.toString = $estr;
 MyEnum.A.__enum__ = MyEnum;
-MyEnum.B = function(v) { var $x = ["B",1,v]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
-MyEnum.C = function(v) { var $x = ["C",2,v]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
+MyEnum.B = function(a) { var $x = ["B",1,a]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
+MyEnum.C = function(a,b) { var $x = ["C",2,a,b]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
 MyEnum.D = function(e) { var $x = ["D",3,e]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
-var MyEnum2 = { __ename__ : true, __constructs__ : ["A"] };
-MyEnum2.A = function(v) { var $x = ["A",0,v]; $x.__enum__ = MyEnum2; $x.toString = $estr; return $x; };
+var MyEnum2 = { __ename__ : true, __constructs__ : ["A","B"] };
+MyEnum2.A = ["A",0];
+MyEnum2.A.toString = $estr;
+MyEnum2.A.__enum__ = MyEnum2;
+MyEnum2.B = function(v) { var $x = ["B",1,v]; $x.__enum__ = MyEnum2; $x.toString = $estr; return $x; };
 var classy_core_ValueBase = function() { };
 classy_core_ValueBase.__name__ = true;
 classy_core_ValueBase.prototype = {
@@ -132,51 +135,6 @@ Some.prototype = $extend(classy_core_Value.prototype,{
 		return raw;
 	}
 });
-var Data = function() {
-};
-Data.__name__ = true;
-Data.__fromRawValue = function(raw) {
-	var instance = Object.create(Data.prototype);
-	instance.set_value(MyEnum_$_$RawValueConverter.instance.fromRawValue(raw.value));
-	return instance;
-};
-Data.__super__ = classy_core_Value;
-Data.prototype = $extend(classy_core_Value.prototype,{
-	set_value: function(value) {
-		var _gthis = this;
-		var oldValue = this.value;
-		if(oldValue != value) {
-			if(oldValue != null) {
-				MyEnum_$_$Helper.instance.unlink(oldValue);
-			}
-			if(value != null) {
-				MyEnum_$_$Helper.instance.link(value,this,"value");
-			}
-			this.value = value;
-			if(this.__transaction != null) {
-				this.__transaction.rollbacks.push(function() {
-					return _gthis.value = oldValue;
-				});
-			}
-			if(this.__dbChanges != null) {
-				var fieldPath = this.__makeFieldPath(["value"]);
-				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : MyEnum_$_$Helper.instance.toRawValue(value)} : { kind : "delete", path : fieldPath});
-			}
-		}
-		return value;
-	}
-	,__setup: function(transaction,dbChanges) {
-		this.__transaction = transaction;
-		this.__dbChanges = dbChanges;
-	}
-	,__toRawValue: function() {
-		var raw = { };
-		if(this.value != null) {
-			raw.value = MyEnum_$_$Helper.instance.toRawValue(this.value);
-		}
-		return raw;
-	}
-});
 var GameData = function() {
 };
 GameData.__name__ = true;
@@ -185,29 +143,30 @@ GameData.fromRawValue = function(raw) {
 };
 GameData.__fromRawValue = function(raw) {
 	var instance = Object.create(GameData.prototype);
-	instance.set_data(Data.__fromRawValue(raw.data));
+	instance.set_arr(classy_core_ArrayValue.__fromRawValue(raw.arr,MyEnum_$_$RawValueConverter.instance));
 	return instance;
 };
 GameData.__super__ = classy_core_Value;
 GameData.prototype = $extend(classy_core_Value.prototype,{
-	set_data: function(value) {
+	set_arr: function(value) {
 		var _gthis = this;
-		var oldValue = this.data;
+		var oldValue = this.arr;
 		if(oldValue != value) {
 			if(oldValue != null) {
 				oldValue.__unlink();
 			}
 			if(value != null) {
-				value.__link(this,"data");
+				value.helper = MyEnum_$_$Helper.instance;
+				value.__link(this,"arr");
 			}
-			this.data = value;
+			this.arr = value;
 			if(this.__transaction != null) {
 				this.__transaction.rollbacks.push(function() {
-					return _gthis.data = oldValue;
+					return _gthis.arr = oldValue;
 				});
 			}
 			if(this.__dbChanges != null) {
-				var fieldPath = this.__makeFieldPath(["data"]);
+				var fieldPath = this.__makeFieldPath(["arr"]);
 				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value.__toRawValue()} : { kind : "delete", path : fieldPath});
 			}
 		}
@@ -216,20 +175,19 @@ GameData.prototype = $extend(classy_core_Value.prototype,{
 	,__setup: function(transaction,dbChanges) {
 		this.__transaction = transaction;
 		this.__dbChanges = dbChanges;
-		if(this.data != null) {
-			this.data.__setup(transaction,dbChanges);
+		if(this.arr != null) {
+			this.arr.__setup(transaction,dbChanges);
 		}
 	}
 });
 var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
-	var data = GameData.__fromRawValue({ data : { value : "A"}});
+	var data = GameData.__fromRawValue({ arr : []});
 	var dbChanges = new classy_core_DbChanges();
 	data.__setup(new classy_core_Transaction(),dbChanges);
 	var some = new Some();
-	data.set_data(new Data());
-	data.data.set_value(MyEnum.D(MyEnum2.A(some)));
+	data.arr.push(MyEnum.D(MyEnum2.B(some)));
 	some.set_some("LOL");
 	var _g = 0;
 	var _g1 = dbChanges.commit();
@@ -244,24 +202,29 @@ MyEnum2_$_$Helper.__name__ = true;
 MyEnum2_$_$Helper.__interfaces__ = [classy_core_Helper];
 MyEnum2_$_$Helper.prototype = {
 	link: function(value,parent,name) {
-		var v = value[2];
-		if(v != null) {
-			v.__link(parent,name + ".v");
-		}
-	}
-	,unlink: function(value) {
-		var v = value[2];
-		if(v != null) {
-			v.__unlink();
+		switch(value[1]) {
+		case 0:
+			break;
+		case 1:
+			var v = value[2];
+			if(v != null) {
+				v.__link(parent,name + ".v");
+			}
+			break;
 		}
 	}
 	,toRawValue: function(value) {
-		var v = value[2];
-		var raw = { "$tag" : "A"};
-		if(v != null) {
-			raw.v = v.__toRawValue();
+		switch(value[1]) {
+		case 0:
+			return "A";
+		case 1:
+			var v = value[2];
+			var raw = { "$tag" : "B"};
+			if(v != null) {
+				raw.v = v.__toRawValue();
+			}
+			return raw;
 		}
-		return raw;
 	}
 };
 var MyEnum2_$_$RawValueConverter = function() {
@@ -270,11 +233,15 @@ MyEnum2_$_$RawValueConverter.__name__ = true;
 MyEnum2_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
 MyEnum2_$_$RawValueConverter.prototype = {
 	fromRawValue: function(raw) {
-		var _g = Reflect.field(raw,"$tag");
-		if(_g == "A") {
-			return MyEnum2.A(Some.__fromRawValue(raw.v));
+		if(raw == "A") {
+			return MyEnum2.A;
 		} else {
-			throw new js__$Boot_HaxeError("Unknown enum tag: " + _g);
+			var _g = Reflect.field(raw,"$tag");
+			if(_g == "B") {
+				return MyEnum2.B(Some.__fromRawValue(raw.v));
+			} else {
+				throw new js__$Boot_HaxeError("Unknown enum tag: " + _g);
+			}
 		}
 	}
 };
@@ -290,9 +257,9 @@ MyEnum_$_$Helper.prototype = {
 		case 1:
 			break;
 		case 2:
-			var v = value[2];
-			if(v != null) {
-				v.__link(parent,name + ".v");
+			var b = value[3];
+			if(b != null) {
+				b.__link(parent,name + ".b");
 			}
 			break;
 		case 3:
@@ -303,39 +270,20 @@ MyEnum_$_$Helper.prototype = {
 			break;
 		}
 	}
-	,unlink: function(value) {
-		switch(value[1]) {
-		case 0:
-			break;
-		case 1:
-			break;
-		case 2:
-			var v = value[2];
-			if(v != null) {
-				v.__unlink();
-			}
-			break;
-		case 3:
-			var e = value[2];
-			if(e != null) {
-				MyEnum2_$_$Helper.instance.unlink(e);
-			}
-			break;
-		}
-	}
 	,toRawValue: function(value) {
 		switch(value[1]) {
 		case 0:
 			return "A";
 		case 1:
 			var raw = { "$tag" : "B"};
-			raw.v = value[2];
+			raw.a = value[2];
 			return raw;
 		case 2:
-			var v = value[2];
+			var b = value[3];
 			var raw1 = { "$tag" : "C"};
-			if(v != null) {
-				raw1.v = v.__toRawValue();
+			raw1.a = value[2];
+			if(b != null) {
+				raw1.b = b.__toRawValue();
 			}
 			return raw1;
 		case 3:
@@ -360,9 +308,9 @@ MyEnum_$_$RawValueConverter.prototype = {
 			var _g = Reflect.field(raw,"$tag");
 			switch(_g) {
 			case "B":
-				return MyEnum.B(raw.v);
+				return MyEnum.B(raw.a);
 			case "C":
-				return MyEnum.C(Player.__fromRawValue(raw.v));
+				return MyEnum.C(raw.a,Player.__fromRawValue(raw.b));
 			case "D":
 				return MyEnum.D(MyEnum2_$_$RawValueConverter.instance.fromRawValue(raw.e));
 			default:
@@ -384,6 +332,52 @@ var StringBuf = function() {
 	this.b = "";
 };
 StringBuf.__name__ = true;
+var classy_core_ArrayValue = function() {
+	this.array = [];
+};
+classy_core_ArrayValue.__name__ = true;
+classy_core_ArrayValue.__fromRawValue = function(raw,converter) {
+	var instance = new classy_core_ArrayValue();
+	var _g = 0;
+	var _g1 = raw;
+	while(_g < _g1.length) {
+		var value = _g1[_g];
+		++_g;
+		instance.array.push(converter != null ? converter.fromRawValue(value) : value);
+	}
+	return instance;
+};
+classy_core_ArrayValue.__super__ = classy_core_ValueBase;
+classy_core_ArrayValue.prototype = $extend(classy_core_ValueBase.prototype,{
+	push: function(value) {
+		var _gthis = this;
+		var name = "" + this.array.length;
+		var result = this.array.push(value);
+		if(this.helper != null) {
+			this.helper.link(value,this,name);
+		}
+		if(this.__transaction != null) {
+			this.__transaction.rollbacks.push(function() {
+				return _gthis.array.pop();
+			});
+		}
+		if(this.__dbChanges != null) {
+			this.__dbChanges.changes.push({ kind : "push", path : this.__makeFieldPath([]), value : this.helper != null ? this.helper.toRawValue(value) : value});
+		}
+		return result;
+	}
+	,__toRawValue: function() {
+		var raw = [];
+		var _g = 0;
+		var _g1 = this.array;
+		while(_g < _g1.length) {
+			var value = _g1[_g];
+			++_g;
+			raw.push(this.helper != null ? this.helper.toRawValue(value) : value);
+		}
+		return raw;
+	}
+});
 var classy_core_DbChanges = function() {
 	this.changes = [];
 };
