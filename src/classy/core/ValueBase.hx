@@ -39,7 +39,19 @@ class ValueBase {
 	function __makeFieldPath(path:Array<String>):Array<String> {
 		var object = this;
 		while (object.__parent != null) {
-			path.push(object.__name);
+
+			// в случае Value-объектов внутри enum, их путь будет закодирован через точку
+			// так что сканим строку на предмет частей разделенных точкой и добавляем их в путь
+			var name = object.__name;
+			var end = name.length, i = name.length;
+			while (i-- > 0) {
+				if (StringTools.fastCodeAt(name, i) == ".".code) {
+					path.push(name.substring(i + 1, end));
+					end = i;
+				}
+			}
+			path.push(name.substring(0, end));
+
 			object = object.__parent;
 		}
 		path.reverse();

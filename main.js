@@ -9,12 +9,15 @@ function $extend(from, fields) {
 }
 var classy_core_RawValueConverter = function() { };
 classy_core_RawValueConverter.__name__ = true;
-var MyEnum = { __ename__ : true, __constructs__ : ["A","B","C"] };
+var MyEnum = { __ename__ : true, __constructs__ : ["A","B","C","D"] };
 MyEnum.A = ["A",0];
 MyEnum.A.toString = $estr;
 MyEnum.A.__enum__ = MyEnum;
 MyEnum.B = function(v) { var $x = ["B",1,v]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
 MyEnum.C = function(v) { var $x = ["C",2,v]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
+MyEnum.D = function(e) { var $x = ["D",3,e]; $x.__enum__ = MyEnum; $x.toString = $estr; return $x; };
+var MyEnum2 = { __ename__ : true, __constructs__ : ["A"] };
+MyEnum2.A = function(v) { var $x = ["A",0,v]; $x.__enum__ = MyEnum2; $x.toString = $estr; return $x; };
 var classy_core_ValueBase = function() { };
 classy_core_ValueBase.__name__ = true;
 classy_core_ValueBase.prototype = {
@@ -38,7 +41,14 @@ classy_core_ValueBase.prototype = {
 	,__makeFieldPath: function(path) {
 		var object = this;
 		while(object.__parent != null) {
-			path.push(object.__name);
+			var name = object.__name;
+			var end = name.length;
+			var i = name.length;
+			while(i-- > 0) if(name.charCodeAt(i) == 46) {
+				path.push(name.substring(i + 1,end));
+				end = i;
+			}
+			path.push(name.substring(0,end));
 			object = object.__parent;
 		}
 		path.reverse();
@@ -86,19 +96,52 @@ Player.prototype = $extend(classy_core_Value.prototype,{
 		return raw;
 	}
 });
-var GameData = function() {
+var Some = function() {
+	this.set_some("Hi");
 };
-GameData.__name__ = true;
-GameData.fromRawValue = function(raw) {
-	return GameData.__fromRawValue(raw);
+Some.__name__ = true;
+Some.__fromRawValue = function(raw) {
+	var instance = Object.create(Some.prototype);
+	instance.set_some(raw.some);
+	return instance;
 };
-GameData.__fromRawValue = function(raw) {
-	var instance = Object.create(GameData.prototype);
+Some.__super__ = classy_core_Value;
+Some.prototype = $extend(classy_core_Value.prototype,{
+	set_some: function(value) {
+		var _gthis = this;
+		var oldValue = this.some;
+		if(oldValue != value) {
+			this.some = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.some = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				var fieldPath = this.__makeFieldPath(["some"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value} : { kind : "delete", path : fieldPath});
+			}
+		}
+		return value;
+	}
+	,__toRawValue: function() {
+		var raw = { };
+		if(this.some != null) {
+			raw.some = this.some;
+		}
+		return raw;
+	}
+});
+var Data = function() {
+};
+Data.__name__ = true;
+Data.__fromRawValue = function(raw) {
+	var instance = Object.create(Data.prototype);
 	instance.set_value(MyEnum_$_$RawValueConverter.instance.fromRawValue(raw.value));
 	return instance;
 };
-GameData.__super__ = classy_core_Value;
-GameData.prototype = $extend(classy_core_Value.prototype,{
+Data.__super__ = classy_core_Value;
+Data.prototype = $extend(classy_core_Value.prototype,{
 	set_value: function(value) {
 		var _gthis = this;
 		var oldValue = this.value;
@@ -126,22 +169,114 @@ GameData.prototype = $extend(classy_core_Value.prototype,{
 		this.__transaction = transaction;
 		this.__dbChanges = dbChanges;
 	}
+	,__toRawValue: function() {
+		var raw = { };
+		if(this.value != null) {
+			raw.value = MyEnum_$_$Helper.instance.toRawValue(this.value);
+		}
+		return raw;
+	}
+});
+var GameData = function() {
+};
+GameData.__name__ = true;
+GameData.fromRawValue = function(raw) {
+	return GameData.__fromRawValue(raw);
+};
+GameData.__fromRawValue = function(raw) {
+	var instance = Object.create(GameData.prototype);
+	instance.set_data(Data.__fromRawValue(raw.data));
+	return instance;
+};
+GameData.__super__ = classy_core_Value;
+GameData.prototype = $extend(classy_core_Value.prototype,{
+	set_data: function(value) {
+		var _gthis = this;
+		var oldValue = this.data;
+		if(oldValue != value) {
+			if(oldValue != null) {
+				oldValue.__unlink();
+			}
+			if(value != null) {
+				value.__link(this,"data");
+			}
+			this.data = value;
+			if(this.__transaction != null) {
+				this.__transaction.rollbacks.push(function() {
+					return _gthis.data = oldValue;
+				});
+			}
+			if(this.__dbChanges != null) {
+				var fieldPath = this.__makeFieldPath(["data"]);
+				this.__dbChanges.changes.push(value != null ? { kind : "set", path : fieldPath, value : value.__toRawValue()} : { kind : "delete", path : fieldPath});
+			}
+		}
+		return value;
+	}
+	,__setup: function(transaction,dbChanges) {
+		this.__transaction = transaction;
+		this.__dbChanges = dbChanges;
+		if(this.data != null) {
+			this.data.__setup(transaction,dbChanges);
+		}
+	}
 });
 var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
-	var data = GameData.__fromRawValue({ });
+	var data = new GameData();
 	var dbChanges = new classy_core_DbChanges();
 	data.__setup(new classy_core_Transaction(),dbChanges);
-	new Player();
-	data.set_value(MyEnum.A);
+	var some = new Some();
+	data.set_data(new Data());
+	data.data.set_value(MyEnum.D(MyEnum2.A(some)));
+	some.set_some("LOL");
 	var _g = 0;
 	var _g1 = dbChanges.commit();
-	while(_g < _g1.length) console.log("Main.hx:62:",JSON.stringify(_g1[_g++]));
+	while(_g < _g1.length) console.log("Main.hx:71:",JSON.stringify(_g1[_g++]));
 };
 Math.__name__ = true;
 var classy_core_Helper = function() { };
 classy_core_Helper.__name__ = true;
+var MyEnum2_$_$Helper = function() {
+};
+MyEnum2_$_$Helper.__name__ = true;
+MyEnum2_$_$Helper.__interfaces__ = [classy_core_Helper];
+MyEnum2_$_$Helper.prototype = {
+	link: function(value,parent,name) {
+		var v = value[2];
+		if(v != null) {
+			v.__link(parent,name + ".v");
+		}
+	}
+	,unlink: function(value) {
+		var v = value[2];
+		if(v != null) {
+			v.__unlink();
+		}
+	}
+	,toRawValue: function(value) {
+		var v = value[2];
+		var raw = { "$tag" : "A"};
+		if(v != null) {
+			raw.v = v.__toRawValue();
+		}
+		return raw;
+	}
+};
+var MyEnum2_$_$RawValueConverter = function() {
+};
+MyEnum2_$_$RawValueConverter.__name__ = true;
+MyEnum2_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
+MyEnum2_$_$RawValueConverter.prototype = {
+	fromRawValue: function(raw) {
+		if(Reflect.field(raw,"$tag") == "A") {
+			return MyEnum2.A(Some.__fromRawValue(raw.v));
+		} else {
+			throw new js__$Boot_HaxeError("Unknown enum tag");
+		}
+	}
+};
 var MyEnum_$_$Helper = function() {
 };
 MyEnum_$_$Helper.__name__ = true;
@@ -159,6 +294,12 @@ MyEnum_$_$Helper.prototype = {
 				v.__link(parent,name + ".v");
 			}
 			break;
+		case 3:
+			var e = value[2];
+			if(e != null) {
+				MyEnum2_$_$Helper.instance.link(e,parent,name + ".e");
+			}
+			break;
 		}
 	}
 	,unlink: function(value) {
@@ -171,6 +312,12 @@ MyEnum_$_$Helper.prototype = {
 			var v = value[2];
 			if(v != null) {
 				v.__unlink();
+			}
+			break;
+		case 3:
+			var e = value[2];
+			if(e != null) {
+				MyEnum2_$_$Helper.instance.unlink(e);
 			}
 			break;
 		}
@@ -190,6 +337,13 @@ MyEnum_$_$Helper.prototype = {
 				raw1.v = v.__toRawValue();
 			}
 			return raw1;
+		case 3:
+			var e = value[2];
+			var raw2 = { "$tag" : "D"};
+			if(e != null) {
+				raw2.e = MyEnum2_$_$Helper.instance.toRawValue(e);
+			}
+			return raw2;
 		}
 	}
 };
@@ -206,6 +360,8 @@ MyEnum_$_$RawValueConverter.prototype = {
 			return MyEnum.B(raw.v);
 		case "C":
 			return MyEnum.C(Player.__fromRawValue(raw.v));
+		case "D":
+			return MyEnum.D(MyEnum2_$_$RawValueConverter.instance.fromRawValue(raw.e));
 		default:
 			throw new js__$Boot_HaxeError("Unknown enum tag");
 		}
@@ -220,6 +376,10 @@ Reflect.field = function(o,field) {
 		return null;
 	}
 };
+var StringBuf = function() {
+	this.b = "";
+};
+StringBuf.__name__ = true;
 var classy_core_DbChanges = function() {
 	this.changes = [];
 };
@@ -343,6 +503,8 @@ js_Boot.__string_rec = function(o,s) {
 };
 String.__name__ = true;
 Array.__name__ = true;
+MyEnum2_$_$Helper.instance = new MyEnum2_$_$Helper();
+MyEnum2_$_$RawValueConverter.instance = new MyEnum2_$_$RawValueConverter();
 MyEnum_$_$Helper.instance = new MyEnum_$_$Helper();
 MyEnum_$_$RawValueConverter.instance = new MyEnum_$_$RawValueConverter();
 Main.main();

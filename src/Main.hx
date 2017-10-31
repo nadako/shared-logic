@@ -8,7 +8,7 @@ enum MyEnum {
 	C(v:Player);
 	// B(a:Int);
 	// C(a:Int, b:Player);
-	// D(e:MyEnum2);
+	D(e:MyEnum2);
 }
 
 enum MyEnum2 {
@@ -25,8 +25,13 @@ class Some extends Value {
 	public function new() some = "Hi";
 }
 
-class GameData extends Value {
+class Data extends Value {
 	public var value:MyEnum;
+	public function new() {};
+}
+
+class GameData extends Value {
+	public var data:Data;
 
 	public function new() {}
 
@@ -40,23 +45,27 @@ class GameData extends Value {
 
 class Main {
 	static function main() {
-		var raw:RawValue = {};
+		var raw:RawValue = {
+			value: "A"
+		};
 
-		var data = GameData.fromRawValue(raw);
+		// var data = GameData.fromRawValue(raw);
+		var data = new GameData();
 
 		var transaction = new Transaction();
 		var dbChanges = new DbChanges();
 		data.setup(transaction, dbChanges);
 
-		var player = new Player();
-		data.value = A;
+		// var player = new Player();
+		// data.value = A;
 
 		// data.value = C(10, player);
 		// player.some = "hi";
 
-		// var some = new Some();
-		// data.value = D(A(some));
-		// some.some = "LOL";
+		var some = new Some();
+		data.data = new Data();
+		data.data.value = D(A(some));
+		some.some = "LOL";
 
 		for (change in dbChanges.commit())
 			trace(haxe.Json.stringify(change));

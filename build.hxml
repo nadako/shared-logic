@@ -3,3 +3,4 @@
 -js main.js
 -D analyzer-optimize
 -dce full
+-cmd node main.js
