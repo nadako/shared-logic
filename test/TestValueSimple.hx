@@ -14,7 +14,7 @@ class Player extends Value {
 	public function toRaw() return __toRawValue();
 }
 
-class TestValue {
+class TestValueSimple {
 	public function new() {}
 
 	public function setup() {};

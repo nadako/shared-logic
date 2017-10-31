@@ -285,7 +285,7 @@ TestDbChanges.prototype = {
 var TestMain = function() { };
 TestMain.__name__ = ["TestMain"];
 TestMain.main = function() {
-	var cases = [new TestTransaction(),new TestDbChanges(),new TestValue()];
+	var cases = [new TestTransaction(),new TestDbChanges(),new TestValueSimple()];
 	var runner = new utest_Runner();
 	var _g = 0;
 	while(_g < cases.length) runner.addCase(cases[_g++]);
@@ -450,10 +450,10 @@ Player.prototype = $extend(classy_core_Value.prototype,{
 	}
 	,__class__: Player
 });
-var TestValue = function() {
+var TestValueSimple = function() {
 };
-TestValue.__name__ = ["TestValue"];
-TestValue.prototype = {
+TestValueSimple.__name__ = ["TestValueSimple"];
+TestValueSimple.prototype = {
 	setup: function() {
 	}
 	,teardown: function() {
@@ -462,21 +462,21 @@ TestValue.prototype = {
 		var player = new Player();
 		player.set_name("John");
 		player.set_level(42);
-		utest_Assert.equals("John",player.name,null,{ fileName : "TestValue.hx", lineNumber : 27, className : "TestValue", methodName : "testUnset"});
-		utest_Assert.equals(42,player.level,null,{ fileName : "TestValue.hx", lineNumber : 28, className : "TestValue", methodName : "testUnset"});
+		utest_Assert.equals("John",player.name,null,{ fileName : "TestValueSimple.hx", lineNumber : 27, className : "TestValueSimple", methodName : "testUnset"});
+		utest_Assert.equals(42,player.level,null,{ fileName : "TestValueSimple.hx", lineNumber : 28, className : "TestValueSimple", methodName : "testUnset"});
 	}
 	,testFromRawValue: function() {
 		var player = Player.fromRaw({ name : "Mary", level : 3});
-		utest_Assert.is(player,Player,null,{ fileName : "TestValue.hx", lineNumber : 33, className : "TestValue", methodName : "testFromRawValue"});
-		utest_Assert.equals("Mary",player.name,null,{ fileName : "TestValue.hx", lineNumber : 34, className : "TestValue", methodName : "testFromRawValue"});
-		utest_Assert.equals(3,player.level,null,{ fileName : "TestValue.hx", lineNumber : 35, className : "TestValue", methodName : "testFromRawValue"});
+		utest_Assert.is(player,Player,null,{ fileName : "TestValueSimple.hx", lineNumber : 33, className : "TestValueSimple", methodName : "testFromRawValue"});
+		utest_Assert.equals("Mary",player.name,null,{ fileName : "TestValueSimple.hx", lineNumber : 34, className : "TestValueSimple", methodName : "testFromRawValue"});
+		utest_Assert.equals(3,player.level,null,{ fileName : "TestValueSimple.hx", lineNumber : 35, className : "TestValueSimple", methodName : "testFromRawValue"});
 	}
 	,testToRawValue: function() {
 		var player = new Player();
 		player.set_name("John");
 		player.set_level(42);
 		var tmp = player.toRaw();
-		utest_Assert.same({ name : "John", level : 42},tmp,null,null,null,{ fileName : "TestValue.hx", lineNumber : 42, className : "TestValue", methodName : "testToRawValue"});
+		utest_Assert.same({ name : "John", level : 42},tmp,null,null,null,{ fileName : "TestValueSimple.hx", lineNumber : 42, className : "TestValueSimple", methodName : "testToRawValue"});
 	}
 	,testTransaction: function() {
 		var player = new Player();
@@ -486,12 +486,12 @@ TestValue.prototype = {
 		player.setup(t,null);
 		player.set_name("Mary");
 		t.rollbacks = [];
-		utest_Assert.equals("Mary",player.name,null,{ fileName : "TestValue.hx", lineNumber : 54, className : "TestValue", methodName : "testTransaction"});
+		utest_Assert.equals("Mary",player.name,null,{ fileName : "TestValueSimple.hx", lineNumber : 54, className : "TestValueSimple", methodName : "testTransaction"});
 		player.set_level(player.level + 1);
 		player.set_name(null);
 		t.rollback();
-		utest_Assert.equals(42,player.level,null,{ fileName : "TestValue.hx", lineNumber : 59, className : "TestValue", methodName : "testTransaction"});
-		utest_Assert.equals("Mary",player.name,null,{ fileName : "TestValue.hx", lineNumber : 60, className : "TestValue", methodName : "testTransaction"});
+		utest_Assert.equals(42,player.level,null,{ fileName : "TestValueSimple.hx", lineNumber : 59, className : "TestValueSimple", methodName : "testTransaction"});
+		utest_Assert.equals("Mary",player.name,null,{ fileName : "TestValueSimple.hx", lineNumber : 60, className : "TestValueSimple", methodName : "testTransaction"});
 	}
 	,testChanges: function() {
 		var changes = new classy_core_DbChanges();
@@ -502,9 +502,9 @@ TestValue.prototype = {
 		player.set_name(null);
 		player.set_level(player.level + 1);
 		var tmp = changes.commit();
-		utest_Assert.same([{ kind : "set", path : ["name"], value : "John"},{ kind : "set", path : ["level"], value : 42},{ kind : "delete", path : ["name"]},{ kind : "set", path : ["level"], value : 43}],tmp,null,null,null,{ fileName : "TestValue.hx", lineNumber : 73, className : "TestValue", methodName : "testChanges"});
+		utest_Assert.same([{ kind : "set", path : ["name"], value : "John"},{ kind : "set", path : ["level"], value : 42},{ kind : "delete", path : ["name"]},{ kind : "set", path : ["level"], value : 43}],tmp,null,null,null,{ fileName : "TestValueSimple.hx", lineNumber : 73, className : "TestValueSimple", methodName : "testChanges"});
 	}
-	,__class__: TestValue
+	,__class__: TestValueSimple
 };
 var ValueType = { __ename__ : ["ValueType"], __constructs__ : ["TNull","TInt","TFloat","TBool","TObject","TFunction","TClass","TEnum","TUnknown"] };
 ValueType.TNull = ["TNull",0];
