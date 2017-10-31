@@ -224,7 +224,7 @@ GameData.prototype = $extend(classy_core_Value.prototype,{
 var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
-	var data = new GameData();
+	var data = GameData.__fromRawValue({ data : { value : "A"}});
 	var dbChanges = new classy_core_DbChanges();
 	data.__setup(new classy_core_Transaction(),dbChanges);
 	var some = new Some();
@@ -270,10 +270,11 @@ MyEnum2_$_$RawValueConverter.__name__ = true;
 MyEnum2_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
 MyEnum2_$_$RawValueConverter.prototype = {
 	fromRawValue: function(raw) {
-		if(Reflect.field(raw,"$tag") == "A") {
+		var _g = Reflect.field(raw,"$tag");
+		if(_g == "A") {
 			return MyEnum2.A(Some.__fromRawValue(raw.v));
 		} else {
-			throw new js__$Boot_HaxeError("Unknown enum tag");
+			throw new js__$Boot_HaxeError("Unknown enum tag: " + _g);
 		}
 	}
 };
@@ -353,17 +354,20 @@ MyEnum_$_$RawValueConverter.__name__ = true;
 MyEnum_$_$RawValueConverter.__interfaces__ = [classy_core_RawValueConverter];
 MyEnum_$_$RawValueConverter.prototype = {
 	fromRawValue: function(raw) {
-		switch(Reflect.field(raw,"$tag")) {
-		case "A":
+		if(raw == "A") {
 			return MyEnum.A;
-		case "B":
-			return MyEnum.B(raw.v);
-		case "C":
-			return MyEnum.C(Player.__fromRawValue(raw.v));
-		case "D":
-			return MyEnum.D(MyEnum2_$_$RawValueConverter.instance.fromRawValue(raw.e));
-		default:
-			throw new js__$Boot_HaxeError("Unknown enum tag");
+		} else {
+			var _g = Reflect.field(raw,"$tag");
+			switch(_g) {
+			case "B":
+				return MyEnum.B(raw.v);
+			case "C":
+				return MyEnum.C(Player.__fromRawValue(raw.v));
+			case "D":
+				return MyEnum.D(MyEnum2_$_$RawValueConverter.instance.fromRawValue(raw.e));
+			default:
+				throw new js__$Boot_HaxeError("Unknown enum tag: " + _g);
+			}
 		}
 	}
 };

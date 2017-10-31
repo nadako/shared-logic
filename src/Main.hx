@@ -46,11 +46,11 @@ class GameData extends Value {
 class Main {
 	static function main() {
 		var raw:RawValue = {
-			value: "A"
+			data: {value: "A"}
 		};
 
-		// var data = GameData.fromRawValue(raw);
-		var data = new GameData();
+		var data = GameData.fromRawValue(raw);
+		// var data = new GameData();
 
 		var transaction = new Transaction();
 		var dbChanges = new DbChanges();

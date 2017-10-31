@@ -23,6 +23,8 @@ class EnumHelperInfo implements HelperInfo {
 		var linkCases = new Array<Case>();
 		var unlinkCases = new Array<Case>();
 		var toRawValueCases = new Array<Case>();
+
+		var fromRawValueConditions = new Array<{value:Expr, expr:Expr}>();
 		var fromRawValueCases = new Array<Case>();
 
 		for (ctorName in enumType.names) {
@@ -30,7 +32,6 @@ class EnumHelperInfo implements HelperInfo {
 			var ctorIdent = macro $i{ctorName};
 			var patternExpr;
 			var toRawExpr;
-			var fromRawExpr;
 			var linkExprs = [];
 			var unlinkExprs = [];
 
@@ -38,7 +39,7 @@ class EnumHelperInfo implements HelperInfo {
 				case TEnum(_):
 					patternExpr = ctorIdent;
 					toRawExpr = macro $v{ctorName}; // simple string
-					fromRawExpr = ctorIdent;
+					fromRawValueConditions.push({value: macro $v{ctorName}, expr: ctorIdent});
 
 				case TFun(args, _):
 					var ctorArgs = [];
@@ -68,7 +69,10 @@ class EnumHelperInfo implements HelperInfo {
 						$b{toRawExprs};
 						raw;
 					}
-					fromRawExpr = macro $ctorIdent($a{fromRawArgExprs});
+					fromRawValueCases.push({
+						values: [macro $v{ctorName}],
+						expr: macro $ctorIdent($a{fromRawArgExprs}),
+					});
 
 				case t:
 					throw new Error("Unexpected enum field type: " + t.toString(), ctorField.pos);
@@ -88,15 +92,20 @@ class EnumHelperInfo implements HelperInfo {
 				values: [patternExpr],
 				expr: toRawExpr
 			});
-
-			fromRawValueCases.push({
-				values: [macro $v{ctorName}],
-				expr: fromRawExpr,
-			});
 		}
 
 		var linkExpr = if (_needsLinking) {pos: enumType.pos, expr: ESwitch(macro value, linkCases, null)} else macro {};
 		var unlinkExpr = if (_needsLinking) {pos: enumType.pos, expr: ESwitch(macro value, unlinkCases, null)} else macro {};
+
+		fromRawValueCases.push({values: [macro unknown], expr: macro throw "Unknown enum tag: " + unknown});
+		var fromRawValueSwitchExpr = {pos: enumType.pos, expr: ESwitch(macro (Reflect.field(raw, "$tag") : String), fromRawValueCases, null)};
+		var fromRawValueExpr = Lambda.fold(fromRawValueConditions, function(cond, expr) {
+			return {
+				pos: enumType.pos,
+				expr: EIf(macro raw == ${cond.value}, cond.expr, expr)
+			}
+			return expr;
+		}, fromRawValueSwitchExpr);
 
 		var enumTP = ValueMacro.getTypePath(enumType);
 		var enumCT = TPath(enumTP);
@@ -136,7 +145,7 @@ class EnumHelperInfo implements HelperInfo {
 
 				@:pure
 				public function fromRawValue(raw:classy.core.RawValue):$enumCT {
-					return ${{pos: enumType.pos, expr: ESwitch(macro Reflect.field(raw, "$tag"), fromRawValueCases, macro throw "Unknown enum tag")}};
+					return $fromRawValueExpr;
 				}
 			}
 			rawValueConverterTD.pack = enumType.pack;
