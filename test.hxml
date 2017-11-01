@@ -6,6 +6,8 @@
 
 --each
 
+-lib mcover
+--macro mcover.MCover.coverage([''], ['src'])
 -lib hxnodejs
 -js bin/test.js
 -cmd node bin/test.js

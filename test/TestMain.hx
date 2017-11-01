@@ -13,7 +13,16 @@ class TestMain {
 		var runner = new Runner();
 		for (c in cases)
 			runner.addCase(c);
-		Report.create(runner);
+		Report.create(runner).setHandler(function(report) {
+			Sys.println(report.getResults());
+			#if mcover
+			var logger = mcover.coverage.MCoverage.getLogger();
+			var client = new mcover.coverage.client.PrintClient();
+			logger.addClient(client);
+			logger.report();
+			Sys.println(client.output);
+			#end
+		});
 		runner.run();
 	}
 }
