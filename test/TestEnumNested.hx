@@ -79,4 +79,17 @@ class TestEnumNested {
 		i.count++;
 		same([DbChange.set(["nested", "e", "i", "count"], 1)], c.commit());
 	}
+
+	public function testTransaction() @:privateAccess {
+		var data = new NestedData();
+		var t = new Transaction();
+		data.__setup(t, null);
+
+		var i = new Inner(42);
+		data.nested = C(B(i));
+		t.commit();
+		i.count++;
+		t.rollback();
+		equals(i.count, 42);
+	}
 }
