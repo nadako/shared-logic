@@ -10,6 +10,8 @@ class TestMain {
 			new TestValueSimple(),
 			new TestValueNested(),
 			new TestArrayValue(),
+			new TestEnumFlat(),
+			new TestEnumNested(),
 			new TestValueHelper(),
 		];
 		var runner = new Runner();
