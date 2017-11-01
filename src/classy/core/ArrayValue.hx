@@ -7,11 +7,14 @@ package classy.core;
 	length, push, pop,
 	__setup, __setHelpers, __link, __unlink, __toRawValue
 )
+@:forwardStatics(__fromRawValue)
 abstract ArrayValue<T>(ArrayValueImpl<T>) from ArrayValueImpl<T> {
 	public inline function new() this = new ArrayValueImpl();
 	@:op([]) inline function get(index:Int):T return this.array[index];
 	@:op([]) inline function set(index:Int, value:T):T return this.set(index, value);
 	public inline function iterator() return new ArrayIterator(this.array);
+
+	public static inline function isArrayValue(v:Any) return Std.is(v, ArrayValueImpl);
 }
 
 // TODO: this should be private :-/
