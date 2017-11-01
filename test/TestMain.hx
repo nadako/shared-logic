@@ -6,6 +6,7 @@ class TestMain {
 		var cases:Array<Any> = [
 			new TestTransaction(),
 			new TestDbChanges(),
+			new TestValueBase(),
 			new TestValueSimple(),
 			new TestValueNested(),
 			new TestArrayValue(),
