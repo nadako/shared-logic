@@ -25,6 +25,9 @@ class TestArrayValue {
 		a[0] = 20;
 		equals(20, a[0]);
 		same([20, 30], [for (v in a) v]);
+
+		raises(() -> a[-1] = 5);
+		raises(() -> a[30] = 5);
 	}
 
 	public function testFromRawValueSimple() {
@@ -105,9 +108,6 @@ class TestArrayValue {
 
 		a[0] = 42;
 		equals(0, t.commit().length);
-
-		raises(() -> a[-1] = 5);
-		raises(() -> a[30] = 5);
 	}
 
 	public function testSetupChildren() {
