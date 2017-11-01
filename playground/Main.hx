@@ -12,6 +12,7 @@ class GameData extends Value {
 
 	public function setup(transaction, dbChanges) __setup(transaction, dbChanges);
 	public function toRawValue() return __toRawValue();
+	public static function fromRawValue(raw) return __fromRawValue(raw);
 }
 
 class Player extends Value {
@@ -48,7 +49,16 @@ class HeroWarData extends Value {
 
 class Main {
 	static function main() {
-		var data = new GameData();
+		var data = GameData.fromRawValue({
+			player: {
+				heroes: [
+					{
+						name: "Sicario",
+						state: "Free"
+					}
+				]
+			}
+		});
 
 		var hero = new Hero("Sicario");
 		hero.state = AtWar(new HeroWarData());
@@ -58,19 +68,23 @@ class Main {
 		var dbChanges = new DbChanges();
 		data.setup(transaction, dbChanges);
 
-		trace(haxe.Json.stringify(data.toRawValue()));
-
 		for (hero in data.player.heroes) {
 			switch hero.state {
-				case Free | InSquad | OnMap(_): trace("not at war!");
+				case Free:
+					trace('${hero.name} is free!');
+				case InSquad:
+					trace('${hero.name} is in squad!');
+				case OnMap(placeId):
+					trace('${hero.name} is on map (hero place id = $placeId)!');
 				case AtWar(warData):
+					trace('${hero.name} is at war, increasing attack count ${warData.attackCount}!');
 					warData.attackCount++;
 			}
 		}
 
 		for (change in dbChanges.commit())
-			trace(haxe.Json.stringify(change));
+			trace("CHANGE: " + haxe.Json.stringify(change));
 
-		trace(haxe.Json.stringify(data.toRawValue()));
+		trace("STATE: " + haxe.Json.stringify(data.toRawValue()));
 	}
 }
