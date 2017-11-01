@@ -19,6 +19,7 @@ class TestMain {
 			var logger = mcover.coverage.MCoverage.getLogger();
 			var client = new mcover.coverage.client.PrintClient();
 			client.includeExecutionFrequency = false;
+			client.includePackageBreakdown = false;
 			logger.addClient(client);
 			logger.report();
 			Sys.println(client.output);
