@@ -1,0 +1,15 @@
+sudo: false
+dist: trusty
+
+language: haxe
+
+haxe:
+  - development
+
+install:
+  haxelib install utest
+  haxelib git hxnodejs https://github.com/HaxeFoundation/hxnodejs
+  haxelib git mcover https://github.com/massiveinteractive/mcover master src
+
+script:
+  - haxe test.hxml
