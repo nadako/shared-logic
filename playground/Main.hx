@@ -48,19 +48,29 @@ class HeroWarData extends Value {
 }
 
 class Main {
-	static function main() {
-		var data = GameData.fromRawValue({
-			player: {
-				heroes: [
-					{
-						name: "Sicario",
-						state: "Free"
-					}
-				]
-			}
-		});
+	static function getRawData() return untyped {
+		player: {
+			heroes: [
+				{
+					name: "Sicario",
+					state: "Free"
+				},
+				{
+					name: "Johnas",
+					state: "InSquad"
+				},
+				{
+					name: "Gustavo",
+					state: cast {"$tag": "OnMap", placeId: 38}
+				}
+			]
+		}
+	};
 
-		var hero = new Hero("Sicario");
+	static function main() {
+		var data = GameData.fromRawValue(getRawData());
+
+		var hero = new Hero("Valeria");
 		hero.state = AtWar(new HeroWarData());
 		data.player.heroes.push(hero);
 
