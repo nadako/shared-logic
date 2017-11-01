@@ -61,6 +61,52 @@ class TestArrayValue {
 		a.push(new C("Mary"));
 		same(["John", "Mary"], @:privateAccess a.__toRawValue());
 	}
+
+	public function testTransaction() {
+		var a = new ArrayValue();
+		var t = new Transaction();
+		@:privateAccess a.__setup(t, null);
+
+		a.push(1);
+		a.push(2);
+		t.rollback();
+		equals(0, a.length);
+
+		a.push(1);
+		t.commit();
+		a.pop();
+		a.pop();
+		t.rollback();
+		equals(1, a.length);
+		equals(1, a[0]);
+
+		a[0] = 42;
+		t.rollback();
+		equals(1, a[0]);
+	}
+
+	public function testChangesSimple() {
+		var a = new ArrayValue();
+		var t = new DbChanges();
+		@:privateAccess a.__setup(null, t);
+
+		a.push(1);
+		a.push(2);
+
+		same([
+			DbChange.push([], 1),
+			DbChange.push([], 2),
+		], t.commit());
+
+		a.pop();
+		same([DbChange.pop([])], t.commit());
+
+		a[0] = 42;
+		same([DbChange.set(["0"], 42)], t.commit());
+
+		a[0] = 42;
+		equals(0, t.commit().length);
+	}
 }
 
 private class C {
