@@ -9,6 +9,7 @@ haxe:
 install:
   - haxelib install utest
   - haxelib git hxnodejs https://github.com/HaxeFoundation/hxnodejs
+  - haxelib install mcover
   - haxelib git mcover https://github.com/massiveinteractive/mcover master src
 
 script:
