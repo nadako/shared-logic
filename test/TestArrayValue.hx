@@ -2,7 +2,9 @@ import utest.Assert.*;
 import classy.core.ArrayValue;
 import classy.core.Value;
 import classy.core.RawValue;
+import classy.core.ValueBase;
 import classy.core.RawValueConverter;
+import classy.core.Helper;
 import classy.core.Transaction;
 import classy.core.DbChange;
 import classy.core.DbChanges;
@@ -43,6 +45,22 @@ class TestArrayValue {
 		is(a[1], C);
 		equals(a[1].name, "Mary");
 	}
+
+	public function testToRawValueSimple() {
+		var a = new ArrayValue();
+		a.push(1);
+		a.push(2);
+		a.push(3);
+		same([1, 2, 3], @:privateAccess a.__toRawValue());
+	}
+
+	public function testToRawValueWithHelper() {
+		var a = new ArrayValue();
+		@:privateAccess a.__setHelpers(new TestHelper());
+		a.push(new C("John"));
+		a.push(new C("Mary"));
+		same(["John", "Mary"], @:privateAccess a.__toRawValue());
+	}
 }
 
 private class C {
@@ -55,4 +73,13 @@ private class TestConverter implements RawValueConverter<C> {
 	public function fromRawValue(raw:RawValue):C {
 		return new C(raw);
 	}
+}
+
+private class TestHelper implements Helper<C> {
+	public function new() {}
+
+	public function link(value:C, parent:ValueBase, name:String):Void {}
+	public function unlink(value:C):Void {}
+	public function setup(value:C, transaction:Transaction, dbChanges:DbChanges):Void {}
+	@:pure public function toRawValue(value:C):RawValue return value.name;
 }
