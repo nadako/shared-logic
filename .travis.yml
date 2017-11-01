@@ -6,6 +6,12 @@ language: haxe
 haxe:
   - development
 
+addons:
+  apt:
+    packages:
+    - mono-devel
+    - mono-mcs
+
 install:
   - haxelib install hxcs
   - haxelib install utest
