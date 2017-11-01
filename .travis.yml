@@ -20,4 +20,8 @@ install:
   - haxelib git mcover https://github.com/massiveinteractive/mcover master src
 
 script:
-  - haxe test.hxml
+  - haxe test-js.hxml
+  - node bin/test.js
+  - haxe test-cs.hxml
+  - mono bin/test_cs/bin/TestMain.exe
+
