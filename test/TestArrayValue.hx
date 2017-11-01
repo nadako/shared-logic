@@ -1,6 +1,5 @@
 import utest.Assert.*;
 import classy.core.ArrayValue;
-import classy.core.Value;
 import classy.core.RawValue;
 import classy.core.ValueBase;
 import classy.core.RawValueConverter;
@@ -106,10 +105,74 @@ class TestArrayValue {
 
 		a[0] = 42;
 		equals(0, t.commit().length);
+
+		raises(() -> a[-1] = 5);
+		raises(() -> a[30] = 5);
+	}
+
+	public function testSetupChildren() {
+		var a = new ArrayValue();
+		@:privateAccess a.__setHelpers(new TestHelper());
+
+		var john = new C("John");
+		var mary = new C("Mary");
+		a.push(john);
+		a.push(mary);
+
+		var t = new Transaction();
+		var c = new DbChanges();
+		@:privateAccess a.__setup(t, c);
+
+		equals(t, john.t);
+		equals(t, mary.t);
+		equals(c, john.c);
+		equals(c, mary.c);
+	}
+
+	public function testChangesValue() {
+		var a = new ArrayValue();
+		@:privateAccess a.__setHelpers(new TestHelper());
+		var t = new DbChanges();
+		@:privateAccess a.__setup(null, t);
+
+		var john = new C("John");
+		var mary = new C("Mary");
+
+		a.push(john);
+		a.push(mary);
+
+		equals(a, john.link.p);
+		equals("0", john.link.n);
+		equals(a, mary.link.p);
+		equals("1", mary.link.n);
+
+		same([
+			DbChange.push([], "John"),
+			DbChange.push([], "Mary"),
+		], t.commit());
+
+		a.pop();
+		isNull(mary.link);
+		same([DbChange.pop([])], t.commit());
+
+		var dog = new C("Dog");
+
+		a[0] = dog;
+		isNull(john.link);
+		equals(a, dog.link.p);
+		equals("0", dog.link.n);
+		same([DbChange.set(["0"], "Dog")], t.commit());
+
+		a[0] = dog;
+		equals(0, t.commit().length);
 	}
 }
 
 private class C {
+	public var link:Null<{p:ValueBase, n:String}>;
+	public var t:Transaction;
+	public var c:DbChanges;
+
 	public var name:String;
 	public function new(name) this.name = name;
 }
@@ -124,8 +187,18 @@ private class TestConverter implements RawValueConverter<C> {
 private class TestHelper implements Helper<C> {
 	public function new() {}
 
-	public function link(value:C, parent:ValueBase, name:String):Void {}
-	public function unlink(value:C):Void {}
-	public function setup(value:C, transaction:Transaction, dbChanges:DbChanges):Void {}
+	public function link(value:C, parent:ValueBase, name:String):Void {
+		value.link = {p: parent, n: name};
+	}
+
+	public function unlink(value:C):Void {
+		value.link = null;
+	}
+
+	public function setup(value:C, transaction:Transaction, dbChanges:DbChanges):Void {
+		value.t = transaction;
+		value.c = dbChanges;
+	}
+
 	@:pure public function toRawValue(value:C):RawValue return value.name;
 }
