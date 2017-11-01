@@ -25,3 +25,5 @@ script:
   - haxe test-cs.hxml
   - mono bin/test_cs/bin/TestMain.exe
 
+after_success:
+  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
