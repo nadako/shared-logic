@@ -10,6 +10,7 @@ class TestMain {
 			new TestValueSimple(),
 			new TestValueNested(),
 			new TestArrayValue(),
+			new TestValueHelper(),
 		];
 		var runner = new Runner();
 		for (c in cases)
