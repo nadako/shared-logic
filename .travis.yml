@@ -7,6 +7,7 @@ haxe:
   - development
 
 install:
+  - haxelib install hxcs
   - haxelib install utest
   - haxelib git hxnodejs https://github.com/HaxeFoundation/hxnodejs
   - haxelib install mcover
