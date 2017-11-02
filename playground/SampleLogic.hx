@@ -23,9 +23,8 @@ class Context {
 
 	public function new() {}
 
-	public inline function setup(data) {
-		this.data = data;
-	}
+	@:allow(SampleLogic)
+	inline function setup(data) this.data = data;
 
 	@:allow(SampleLogic)
 	inline function setCommandTime(time) this.commandTime = time;
