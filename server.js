@@ -8,7 +8,7 @@ var data = {
 }
 
 logic.setup(data);
-var changes = logic.execute("changeName", ["Other guy"]);
+var changes = logic.execute(100500, "changeName", ["Other guy"]);
 
 for (change of changes) {
 	console.log(`Got change ${JSON.stringify(change)}`);

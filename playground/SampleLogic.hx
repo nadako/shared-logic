@@ -15,14 +15,20 @@ class Player extends Value {
 	public var name:String;
 }
 
+abstract Time(Float) {}
+
 class Context {
 	public var data(default,null):GameData;
+	public var commandTime(default,null):Time;
 
 	public function new() {}
 
 	public inline function setup(data) {
 		this.data = data;
 	}
+
+	@:allow(SampleLogic)
+	inline function setCommandTime(time) this.commandTime = time;
 }
 
 @:keep @:expose("Logic")
@@ -43,7 +49,8 @@ class SampleLogic {
 		context.setup(data);
 	}
 
-	public function execute(name:String, args:Array<Any>):Array<DbChange> {
+	public function execute(time:Time, name:String, args:Array<Any>):Array<DbChange> {
+		context.setCommandTime(time);
 		try {
 			commands.execute(name, args);
 		} catch (e:Any) {
@@ -75,7 +82,7 @@ class Executor {
 	}
 
 	function changeName(newName:String) {
-		trace('Changing name from ${context.data.player.name} to $newName');
+		trace('Changing name from ${context.data.player.name} to $newName at ${context.commandTime}');
 		context.data.player.name = newName;
 	}
 }
