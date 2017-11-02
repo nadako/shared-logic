@@ -1,0 +1,7 @@
+-cp src
+-cp playground
+SampleLogic
+-D analyzer-optimize
+-dce full
+-js bin/logic.js
+
