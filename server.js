@@ -10,12 +10,12 @@ var data = {
 
 logic.setup(data);
 
-var changes = logic.execute(100500, "player.changeName", ["Other guy"]);
+var changes = logic.execute(100600, "increaseCounter", []);
 for (change of changes) {
 	console.log(`Got change ${JSON.stringify(change)}`);
 }
 
-var changes = logic.execute(100600, "increaseCounter", []);
+var changes = logic.execute(100500, "player.changeName", ["Other guy"]);
 for (change of changes) {
 	console.log(`Got change ${JSON.stringify(change)}`);
 }
