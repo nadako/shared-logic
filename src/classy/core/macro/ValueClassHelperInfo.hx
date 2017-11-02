@@ -75,7 +75,7 @@ class ValueClassHelperInfo implements HelperInfo {
 			var helper = gen.getHelper(t, t, pos);
 			args.push(helper.rawValueConverterExpr());
 		}
-		return macro @:privateAccess $typeExpr.__fromRawValue($a{args});
+		return macro if ($rawExpr == null) null else @:privateAccess $typeExpr.__fromRawValue($a{args});
 	}
 }
 #end

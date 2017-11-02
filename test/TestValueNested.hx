@@ -30,6 +30,10 @@ class Resources extends Value {
 	}
 }
 
+class Recursive extends Value {
+	var child:Recursive;
+}
+
 class TestValueNested {
 	public function new() {}
 
@@ -50,6 +54,12 @@ class TestValueNested {
 		is(data.player.resources, Resources);
 		equals(data.player.resources.gold, 100);
 		equals(data.player.resources.real, 500);
+	}
+
+	public function testFromRawValueRecursive() @:privateAccess {
+		// this ensures there's a null check on a raw field
+		var rec = Recursive.__fromRawValue({});
+		isNull(rec.child);
 	}
 
 	public function testToRawValue() {
