@@ -5,6 +5,7 @@ import classy.core.RawValue;
 import classy.core.Value;
 
 class GameData extends Value {
+	public var counter:Int;
 	public var player:Player;
 
 	public static inline function fromRawValue(raw) return __fromRawValue(raw);
@@ -35,11 +36,11 @@ class SampleLogic {
 	var transaction = new Transaction();
 	var dbChanges = new DbChanges();
 	var context:Context;
-	var commands:Executor;
+	var commands:CommandExecutor<Commands>;
 
 	public function new() {
 		context = new Context();
-		commands = new Executor(context);
+		commands = new CommandExecutor<Commands>(new Commands(context));
 	}
 
 	public function setup(rawData:RawValue) {
@@ -63,21 +64,25 @@ class SampleLogic {
 	}
 }
 
-class Executor {
+class Commands {
+	var context:Context;
+	@:commands var player:PlayerCommands;
+
+	public function new(context) {
+		this.context = context;
+		player = new PlayerCommands(context);
+	}
+
+	function increaseCounter() {
+		context.data.counter++;
+	}
+}
+
+class PlayerCommands {
 	var context:Context;
 
 	public function new(context) {
 		this.context = context;
-	}
-
-	public function execute(name:String, args:Array<Any>) {
-		// TODO: this should be auto-generated
-		switch [name, args] {
-			case ["changeName", [newName]]:
-				changeName(newName);
-			case _:
-				throw 'Unknown command or invalid number of arguments (name=$name, args=$args)';
-		}
 	}
 
 	function changeName(newName:String) {
