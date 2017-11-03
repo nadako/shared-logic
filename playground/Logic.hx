@@ -29,7 +29,11 @@ class Logic {
 		} catch (e:Any) {
 			transaction.rollback();
 			dbChanges.rollback();
+			#if js
 			js.Lib.rethrow();
+			#else
+			cs.Lib.rethrow(e);
+			#end
 		}
 		transaction.commit();
 		var changes = dbChanges.commit();
