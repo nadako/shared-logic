@@ -8,8 +8,10 @@ using haxe.macro.Tools;
 
 class HelperGenerator {
 	final cache:Map<String,HelperInfo>;
+	final defMode:Bool;
 
-	public function new() {
+	public function new(defMode) {
+		this.defMode = defMode; // TODO: rework to baseclass + overrides instead of this flag
 		cache = new Map();
 	}
 
@@ -59,12 +61,13 @@ class HelperGenerator {
 
 			case _:
 		}
-		throw new Error("Unsupported type for Value fields: " + realType.toString(), pos);
+		throw new Error('Unsupported type for ${if (defMode) "Def" else "Value"} fields: ' + realType.toString(), pos);
 	}
 
 	function isValueClass(cl:ClassType):Bool {
 		return switch cl {
-			case {pack: ["classy", "core"], name: "ValueBase"}: true;
+			case {pack: ["classy", "core"], name: "ValueBase"} if (!defMode): true;
+			case {pack: ["classy", "core"], name: "Def"} if (defMode): true;
 			case _ if (cl.superClass != null): isValueClass(cl.superClass.t.get());
 			case _: false;
 		}

@@ -7,6 +7,8 @@ import haxe.macro.Type;
 using haxe.macro.Tools;
 
 class DefMacro {
+	static var gen = new HelperGenerator(true); // TODO: check how this plays with compiler cache
+
 	static function build() {
 		var fields = Context.getBuildFields();
 		var newFields = new Array<Field>();
@@ -43,7 +45,7 @@ class DefMacro {
 
 					var fieldName = field.name;
 					var fieldType = type.toType();
-					var helper = @:privateAccess ValueMacro.gen.getHelper(fieldType, fieldType, field.pos);
+					var helper = gen.getHelper(fieldType, fieldType, field.pos);
 
 					var toRawExpr = helper.toRaw(macro this.$fieldName, rawValueExpr -> macro raw.$fieldName = $rawValueExpr, () -> macro {});
 					toRawExprs.push(toRawExpr);

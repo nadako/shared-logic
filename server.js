@@ -10,9 +10,17 @@ var data = {
 
 var defs = {
 	increaseValue: 100,
+	limits: {
+		counterLimit: 150
+	}
 }
 
 logic.setup(data, defs);
+
+var changes = logic.execute(100600, "increaseCounter", []);
+for (change of changes) {
+	console.log(`Got change ${JSON.stringify(change)}`);
+}
 
 var changes = logic.execute(100600, "increaseCounter", []);
 for (change of changes) {

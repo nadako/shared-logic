@@ -8,7 +8,10 @@ class Commands {
 	}
 
 	function increaseCounter() {
-		context.data.counter += context.defs.increaseValue;
+		var counter = context.data.counter + context.defs.increaseValue;
+		if (counter > context.defs.limits.counterLimit)
+			counter = context.defs.limits.counterLimit;
+		context.data.counter = counter;
 	}
 }
 

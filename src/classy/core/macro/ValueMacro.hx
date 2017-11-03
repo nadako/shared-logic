@@ -7,7 +7,7 @@ import haxe.macro.Type;
 using haxe.macro.Tools;
 
 class ValueMacro {
-	static var gen = new HelperGenerator(); // TODO: check how this plays with compiler cache
+	static var gen = new HelperGenerator(false); // TODO: check how this plays with compiler cache
 
 	static function build() {
 		var fields = Context.getBuildFields();
