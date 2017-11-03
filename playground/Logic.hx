@@ -2,6 +2,7 @@ import classy.core.Transaction;
 import classy.core.DbChange;
 import classy.core.DbChanges;
 import classy.core.RawValue;
+import classy.core.CommandExecutor;
 
 @:keep @:expose
 class Logic {

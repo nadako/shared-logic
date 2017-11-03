@@ -1,3 +1,5 @@
+package classy.core;
+
 /**
 	Класс, отвечающий за диспетчеризацию команд.
 
@@ -33,7 +35,8 @@
 	executor.execute("doStuff", []);
 	executor.execute("sub.doOtherStuff", []);
 **/
-#if !display @:genericBuild(CommandExecutorMacro.build()) #end
+@:ignoreCover
+#if !display @:genericBuild(classy.core.macro.CommandExecutorMacro.build()) #end
 class CommandExecutor<T> {
 	public function new(commands:T) {}
 	public function execute(name:String, args:Array<Any>) {}

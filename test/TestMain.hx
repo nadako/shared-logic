@@ -13,6 +13,7 @@ class TestMain {
 			new TestEnumFlat(),
 			new TestEnumNested(),
 			new TestValueHelper(),
+			new TestCommandExecutor(),
 		];
 		var runner = new Runner();
 		for (c in cases)
