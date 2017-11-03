@@ -5,27 +5,25 @@ import haxe.macro.Type;
 using haxe.macro.Tools;
 
 class CommandExecutorMacro {
-	static var id = 0;
-	static var cache = new Map<String,String>();
-
 	static function build() {
 		var commandsType = getCommandsType();
-		var commandsCT = commandsType.toComplexType();
-		var key = commandsCT.toString();
-		var name = cache[key];
-		if (name == null) {
-			var id = id++;
-			name = "Executor" + id;
-			cache[key] = name;
-			var dispatchExpr = generateDispatch(commandsType, Context.currentPos());
-			var td = macro class $name {
+		var commandsClass = switch commandsType {
+			case TInst(_.get() => cl, _): cl;
+			case _: throw "commands type must be a class";
+		}
+		var executorName = 'CommandExecutor__${commandsClass.name}';
+		var dotPath = haxe.macro.MacroStringTools.toDotPath(commandsClass.pack, executorName);
+		try Context.getType(dotPath) catch (_:Any) {
+			var commandsCT = commandsType.toComplexType();
+			var dispatchExpr = generateDispatchExpr(commandsClass, commandsClass.pos);
+			var td = macro class $executorName {
 				var commands:$commandsCT;
 				public function new(commands) this.commands = commands;
 				public function execute(name:String, args:Array<Any>) $dispatchExpr;
 			}
-			Context.defineType(td);
+			Context.defineType(td, commandsClass.module);
 		}
-		return TPath({pack: [], name: name});
+		return TPath({pack: commandsClass.pack, name: executorName});
 	}
 
 	static function getCommandsType():Type {
@@ -51,36 +49,34 @@ class CommandExecutorMacro {
 		return commandsType;
 	}
 
-	static function generateDispatch(type:Type, pos:Position) {
+	static function generateDispatchExpr(cl:ClassType, pos:Position) {
 		var cases = new Array<Case>();
 
-		function loop(type:Type, nameAcc:Array<String>) {
-			switch type {
-				case TInst(_.get() => cl, _):
-					for (field in cl.fields.get()) {
-						if (!field.isPublic)
-							continue;
-						var nameAcc = nameAcc.concat([field.name]);
-						switch field.type.follow() {
-							case TInst(_):
-								loop(field.type, nameAcc);
-							case TFun(args, _):
-								var args = [for (i in 0...args.length) macro args[$v{i}]];
-								var nameExpr = macro $v{nameAcc.join(".")};
-								nameAcc.unshift("commands");
-								var methodExpr = macro @:privateAccess $p{nameAcc};
-								cases.push({
-									values: [nameExpr],
-									expr: macro $methodExpr($a{args})
-								});
-							case _:
-						}
-					}
-				case _:
-					throw new Error("commands type is not a class", pos);
+		function loop(cl:ClassType, nameAcc:Array<String>) {
+			for (field in cl.fields.get()) {
+				if (!field.isPublic)
+					continue;
+
+				var nameAcc = nameAcc.concat([field.name]);
+				switch field.type.follow() {
+					case TInst(_.get() => cl, _):
+						loop(cl, nameAcc);
+
+					case TFun(args, _):
+						var args = [for (i in 0...args.length) macro args[$v{i}]];
+						var nameExpr = macro $v{nameAcc.join(".")};
+						nameAcc.unshift("commands");
+						var methodExpr = macro @:privateAccess $p{nameAcc};
+						cases.push({
+							values: [nameExpr],
+							expr: macro $methodExpr($a{args})
+						});
+
+					case _:
+				}
 			}
 		}
-		loop(type, []);
+		loop(cl, []);
 
 		var defaultExpr = macro throw "Unknown command " + name;
 		return {pos: pos, expr: ESwitch(macro name, cases, defaultExpr)};
