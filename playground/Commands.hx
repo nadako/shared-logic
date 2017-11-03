@@ -8,7 +8,7 @@ class Commands {
 	}
 
 	function increaseCounter() {
-		context.data.counter++;
+		context.data.counter += context.defs.increaseValue;
 	}
 }
 

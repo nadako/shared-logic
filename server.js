@@ -8,7 +8,11 @@ var data = {
 	}
 }
 
-logic.setup(data);
+var defs = {
+	increaseValue: 100,
+}
+
+logic.setup(data, defs);
 
 var changes = logic.execute(100600, "increaseCounter", []);
 for (change of changes) {

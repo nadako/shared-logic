@@ -15,10 +15,11 @@ class Logic {
 		commands = new CommandExecutor<Commands>(new Commands(context));
 	}
 
-	public function setup(rawData:RawValue) {
+	public function setup(rawData:RawValue, rawDefs:RawValue) {
 		var data = GameData.fromRawValue(rawData);
 		data.setup(transaction, dbChanges);
-		context.setup(data);
+		var defs = DefData.fromRawValue(rawDefs);
+		context.setup(data, defs);
 	}
 
 	public function execute(time:Time, name:String, args:Array<Any>):Array<DbChange> {
