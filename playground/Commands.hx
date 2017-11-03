@@ -1,13 +1,13 @@
 class Commands {
 	var context:Context;
-	@:commands var player:PlayerCommands;
+	public var player:PlayerCommands;
 
 	public function new(context) {
 		this.context = context;
 		player = new PlayerCommands(context);
 	}
 
-	function increaseCounter() {
+	public function increaseCounter() {
 		var counter = context.data.counter + context.defs.increaseValue;
 		if (counter > context.defs.limits.counterLimit)
 			counter = context.defs.limits.counterLimit;
@@ -22,7 +22,7 @@ class PlayerCommands {
 		this.context = context;
 	}
 
-	function changeName(newName:String) {
+	public function changeName(newName:String) {
 		trace('Changing name from ${context.data.player.name} to $newName at ${context.commandTime}');
 		context.data.player.name = newName;
 	}

@@ -9,11 +9,7 @@ class CommandExecutorMacro {
 	static var cache = new Map<String,String>();
 
 	static function build() {
-		var commandsType = switch Context.getLocalType() {
-			case TInst(_, [t]): t;
-			case _: throw false; // should not happen
-		}
-
+		var commandsType = getCommandsType();
 		var commandsCT = commandsType.toComplexType();
 		var key = commandsCT.toString();
 		var name = cache[key];
@@ -24,14 +20,35 @@ class CommandExecutorMacro {
 			var dispatchExpr = generateDispatch(commandsType, Context.currentPos());
 			var td = macro class $name {
 				var commands:$commandsCT;
-				public function new(commands) {
-					this.commands = commands;
-				}
+				public function new(commands) this.commands = commands;
 				public function execute(name:String, args:Array<Any>) $dispatchExpr;
 			}
 			Context.defineType(td);
 		}
 		return TPath({pack: [], name: name});
+	}
+
+	static function getCommandsType():Type {
+		var commandsType = switch Context.getLocalType() {
+			case TInst(_, [t]): t;
+			case _: throw false; // should not happen
+		}
+
+		switch commandsType {
+			case TMono(_):
+				// we called it as `new CommandExecutor(something)` without specifying the type parameter,
+				// which is okay, because we can infer it from the constructor argument
+				switch Context.getCallArguments() {
+					case [argExpr]:
+						commandsType = Context.typeof(argExpr);
+					case _:
+						throw new Error("CommandExecutor must receive a commands object", Context.currentPos());
+				}
+			case _:
+				// type is known, proceed using it
+		}
+
+		return commandsType;
 	}
 
 	static function generateDispatch(type:Type, pos:Position) {
@@ -41,9 +58,11 @@ class CommandExecutorMacro {
 			switch type {
 				case TInst(_.get() => cl, _):
 					for (field in cl.fields.get()) {
+						if (!field.isPublic)
+							continue;
 						var nameAcc = nameAcc.concat([field.name]);
 						switch field.type.follow() {
-							case TInst(_) if (field.meta.has(":commands")):
+							case TInst(_):
 								loop(field.type, nameAcc);
 							case TFun(args, _):
 								var args = [for (i in 0...args.length) macro args[$v{i}]];

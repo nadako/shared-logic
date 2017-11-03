@@ -12,7 +12,7 @@ class Logic {
 
 	public function new() {
 		context = new Context();
-		commands = new CommandExecutor<Commands>(new Commands(context));
+		commands = new CommandExecutor(new Commands(context));
 	}
 
 	public function setup(rawData:RawValue, rawDefs:RawValue) {
