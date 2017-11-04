@@ -1,3 +1,5 @@
+import GameData;
+
 class Commands {
 	var context:Context;
 	public var player:PlayerCommands;
@@ -25,6 +27,17 @@ class PlayerCommands {
 	public function changeName(newName:String) {
 		trace('Changing name from ${context.data.player.name} to $newName at ${context.commandTime}');
 		context.data.player.name = newName;
+	}
+
+	public function addHero(heroId:HeroId) {
+		var currentAmount = context.data.heroes.get(heroId);
+		if (currentAmount == null)
+			currentAmount = 0;
+		context.data.heroes.set(heroId, currentAmount + 1);
+	}
+
+	public function removeHeroes(heroId:HeroId) {
+		context.data.heroes.remove(heroId);
 	}
 
 	public function checkInventory() {

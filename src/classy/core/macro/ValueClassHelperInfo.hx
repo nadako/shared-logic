@@ -32,13 +32,12 @@ class ValueClassHelperInfo implements HelperInfo {
 
 	public function link(valueExpr:Expr, parentExpr:Expr, nameExpr:Expr, pos:Position):Expr {
 		var linkExpr = macro @:privateAccess $valueExpr.__link($parentExpr, $nameExpr);
-
 		if (appliedParams.length > 0) {
 			var helperExprs = [];
-			for (t in appliedParams) {
+			iterTypeParams(function(t) {
 				var helper = gen.getHelper(t, t, pos);
 				helperExprs.push(helper.helperExpr());
-			}
+			});
 			linkExpr = macro {
 				@:privateAccess $valueExpr.__setHelpers($a{helperExprs});
 				$linkExpr;
@@ -68,13 +67,21 @@ class ValueClassHelperInfo implements HelperInfo {
 		};
 	}
 
+	function iterTypeParams(f:Type->Void) {
+		for (i in 0...classType.params.length) {
+			var skip = switch classType.params[i].t { case TInst(_.get() => c, _): c.meta.has(":basic"); case _: throw false; };
+			if (!skip)
+				f(appliedParams[i]);
+		}
+	}
+
 	public function fromRaw(rawExpr:Expr, pos:Position):Expr {
 		var typeExpr = makeTypeExpr();
 		var args = [macro $rawExpr];
-		for (t in appliedParams) {
+		iterTypeParams(function(t) {
 			var helper = gen.getHelper(t, t, pos);
 			args.push(helper.rawValueConverterExpr());
-		}
+		});
 		return macro if ($rawExpr == null) null else @:privateAccess $typeExpr.__fromRawValue($a{args});
 	}
 }

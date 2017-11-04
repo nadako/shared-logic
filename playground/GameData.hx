@@ -1,9 +1,11 @@
 import classy.core.Value;
 import classy.core.ArrayValue;
+import classy.core.StringMapValue;
 
 class GameData extends Value {
 	public var counter:Int;
 	public var player:Player;
+	public var heroes:StringMapValue<HeroId,Int>;
 
 	public static inline function fromRawValue(raw)
 		return __fromRawValue(raw);
@@ -18,7 +20,7 @@ enum Gender {
 	Fluid;
 }
 
-abstract HeroId(String) {}
+abstract HeroId(String) to String {}
 abstract ChestId(String) {}
 
 enum InventoryItem {

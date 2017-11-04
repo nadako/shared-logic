@@ -3,6 +3,9 @@ var logic = new logicModule.Logic();
 
 var data = {
 	counter: 0,
+	heroes: {
+
+	},
 	player: {
 		name: "Some guy",
 		gender: "Male",
@@ -23,19 +26,17 @@ var defs = {
 
 logic.setup(data, defs);
 
-var changes = logic.execute(100600, "increaseCounter", []);
-for (change of changes) {
-	console.log(`Got change ${JSON.stringify(change)}`);
+function exec(time, name, args) {
+	var changes = logic.execute(time, name, args);
+	for (change of changes) {
+		console.log(`Got change ${JSON.stringify(change)}`);
+	}
 }
 
-var changes = logic.execute(100600, "increaseCounter", []);
-for (change of changes) {
-	console.log(`Got change ${JSON.stringify(change)}`);
-}
-
-var changes = logic.execute(100500, "player.changeName", ["Other guy"]);
-for (change of changes) {
-	console.log(`Got change ${JSON.stringify(change)}`);
-}
-
-logic.execute(100700, "player.checkInventory", []);
+exec(100600, "increaseCounter", []);
+exec(100600, "increaseCounter", []);
+exec(100500, "player.changeName", ["Other guy"]);
+exec(100700, "player.checkInventory", []);
+exec(100800, "player.addHero", ["arnie"]);
+exec(100800, "player.addHero", ["arnie"]);
+exec(100800, "player.removeHeroes", ["arnie"]);
