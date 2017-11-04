@@ -45,10 +45,9 @@ class StringMapValue<@:basic K:String, V> extends ValueBase {
 	}
 
 	static function __fromRawValue<K:String,V>(raw:RawValue, converter:RawValueConverter<V>):StringMapValue<K,V> {
-		var raw = (raw : haxe.DynamicAccess<RawValue>);
 		var instance = new StringMapValue();
-		for (key in raw.keys()) {
-			var value = raw[key];
+		for (key in js.Object.keys(raw)) {
+			var value = raw[cast key];
 			instance.map.set(key, if (converter != null) converter.fromRawValue(value) else value);
 		}
 		return instance;
