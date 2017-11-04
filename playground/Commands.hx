@@ -26,4 +26,17 @@ class PlayerCommands {
 		trace('Changing name from ${context.data.player.name} to $newName at ${context.commandTime}');
 		context.data.player.name = newName;
 	}
+
+	public function checkInventory() {
+		for (item in context.data.player.inventory) {
+			switch item {
+				case LotteryTicket:
+					trace("yay, a lottery ticket");
+				case HeroParts(heroId, amount):
+					trace('call 911 he`s got $amount $heroId`s body parts!');
+				case Chest(chestId):
+					trace('ooh so what`s in that $chestId?');
+			}
+		}
+	}
 }
