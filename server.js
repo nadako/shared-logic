@@ -6,6 +6,13 @@ var data = {
 	heroes: {
 
 	},
+	map: {
+		"1": {
+			name: "hq",
+			x: 10,
+			y: 15,
+		}
+	},
 	player: {
 		name: "Some guy",
 		gender: "Male",
@@ -40,3 +47,4 @@ exec(100700, "player.checkInventory", []);
 exec(100800, "player.addHero", ["arnie"]);
 exec(100800, "player.addHero", ["arnie"]);
 exec(100800, "player.removeHeroes", ["arnie"]);
+exec(100800, "checkMap", []);

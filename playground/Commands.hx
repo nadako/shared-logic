@@ -15,6 +15,14 @@ class Commands {
 			counter = context.defs.limits.counterLimit;
 		context.data.counter = counter;
 	}
+
+	public function checkMap() {
+		var item = context.data.map.get(cast 1);
+		trace(Std.is(item, MapItem));
+		trace(item.x);
+		trace(item.y);
+		trace(item.name);
+	}
 }
 
 class PlayerCommands {
