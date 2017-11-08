@@ -5,6 +5,8 @@ import haxe.macro.Expr;
 import haxe.macro.Type;
 using haxe.macro.Tools;
 
+import classy.core.macro.Utils.getRawValueConverterName;
+
 class ValueClassHelperInfo implements HelperInfo {
 	final gen:HelperGenerator;
 	final classType:ClassType;
@@ -25,7 +27,7 @@ class ValueClassHelperInfo implements HelperInfo {
 	}
 
 	public function rawValueConverterExpr():Expr {
-		var rawValueConverterName = ValueMacro.getRawValueConverterName(classType.name);
+		var rawValueConverterName = getRawValueConverterName(classType.name);
 		var typeExpr = macro $p{classType.pack.concat([rawValueConverterName])};
 		return macro $typeExpr.get();
 	}

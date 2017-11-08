@@ -6,6 +6,9 @@ import haxe.macro.Expr;
 import haxe.macro.Type;
 using haxe.macro.Tools;
 
+import classy.core.macro.Utils.getTypePath;
+import classy.core.macro.Utils.getRawValueConverterName;
+
 class DefMacro {
 	static var gen = new HelperGenerator(true); // TODO: check how this plays with compiler cache
 
@@ -19,7 +22,7 @@ class DefMacro {
 		switch Context.getLocalType() {
 			case TInst(_.get() => cl, _):
 				if (cl.isPrivate) throw new Error("Value subclasses cannot be private", cl.pos);
-				thisTP = ValueMacro.getTypePath(cl);
+				thisTP = getTypePath(cl);
 				thisModule = cl.module;
 				pos = cl.pos;
 			case _:
@@ -94,7 +97,7 @@ class DefMacro {
 				})
 			});
 
-			var rawValueConverterName = ValueMacro.getRawValueConverterName(thisTP.sub);
+			var rawValueConverterName = getRawValueConverterName(thisTP.sub);
 			var rawValueConverterTP = {pack: thisTP.pack, name: rawValueConverterName};
 			var rawValueConverterTD = macro class $rawValueConverterName implements classy.core.RawValueConverter<$thisCT> {
 				inline function new() {}

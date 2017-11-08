@@ -6,6 +6,8 @@ import haxe.macro.Expr;
 import haxe.macro.Type;
 using haxe.macro.Tools;
 
+import classy.core.macro.Utils.*;
+
 class EnumHelperInfo implements HelperInfo {
 	final gen:HelperGenerator;
 	final enumType:EnumType;
@@ -115,11 +117,11 @@ class EnumHelperInfo implements HelperInfo {
 			return expr;
 		}, fromRawValueSwitchExpr);
 
-		var enumTP = ValueMacro.getTypePath(enumType);
+		var enumTP = getTypePath(enumType);
 		var enumCT = TPath(enumTP);
 
 		{
-			var helperName = ValueMacro.getHelperName(enumType.name);
+			var helperName = getHelperName(enumType.name);
 			var helperTP = {pack: enumType.pack, name: helperName};
 			var helperTD = macro class $helperName implements classy.core.Helper<$enumCT> {
 				inline function new() {}
@@ -148,7 +150,7 @@ class EnumHelperInfo implements HelperInfo {
 		}
 
 		{
-			var rawValueConverterName = ValueMacro.getRawValueConverterName(enumType.name);
+			var rawValueConverterName = getRawValueConverterName(enumType.name);
 			var rawValueConverterTP = {pack: enumType.pack, name: rawValueConverterName};
 			var rawValueConverterTD = macro class $rawValueConverterName implements classy.core.RawValueConverter<$enumCT> {
 				inline function new() {}
@@ -172,13 +174,13 @@ class EnumHelperInfo implements HelperInfo {
 	}
 
 	public function helperExpr():Expr {
-		var helperName = ValueMacro.getHelperName(enumType.name);
+		var helperName = getHelperName(enumType.name);
 		var typeExpr = macro $p{enumType.pack.concat([helperName])};
 		return macro $typeExpr.get();
 	}
 
 	public function rawValueConverterExpr():Expr {
-		var rawValueConverterName = ValueMacro.getRawValueConverterName(enumType.name);
+		var rawValueConverterName = getRawValueConverterName(enumType.name);
 		var typeExpr = macro $p{enumType.pack.concat([rawValueConverterName])};
 		return macro $typeExpr.get();
 	}

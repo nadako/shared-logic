@@ -6,6 +6,9 @@ import haxe.macro.Expr;
 import haxe.macro.Type;
 using haxe.macro.Tools;
 
+import classy.core.macro.Utils.getTypePath;
+import classy.core.macro.Utils.getRawValueConverterName;
+
 class ValueMacro {
 	static var gen = new HelperGenerator(false); // TODO: check how this plays with compiler cache
 
@@ -162,18 +165,5 @@ class ValueMacro {
 
 		return fields.concat(newFields);
 	}
-
-	public static inline function getRawValueConverterName(name:String) return name + "__RawValueConverter";
-	public static inline function getHelperName(name:String) return name + "__Helper";
-
-	public static function getTypePath(t:BaseType):TypePath {
-		var module = t.module.split(".").pop();
-		return {
-			pack: t.pack,
-			name: module,
-			sub: t.name
-		};
-	}
-
 }
 #end
