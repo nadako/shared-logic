@@ -28,7 +28,8 @@ class DefMacro {
 			case _:
 				throw new Error("ValueMacro.build() called on a non-class", Context.currentPos());
 		}
-		var thisCT = TPath(thisTP);
+
+		var rawValueConverterBuilder = new ValueRawValueConverterBuilder(thisTP, pos);
 
 		for (field in fields) {
 			if (field.access.indexOf(AStatic) != -1)
@@ -54,7 +55,7 @@ class DefMacro {
 					toRawExprs.push(toRawExpr);
 
 					var fromRawExpr = helper.fromRaw(macro raw.$fieldName, field.pos);
-					fromRawExprs.push(macro instance.$fieldName = $fromRawExpr);
+					rawValueConverterBuilder.addFromRawExpr(macro instance.$fieldName = $fromRawExpr);
 
 					field.kind = FProp("default", "null", type, expr);
 			}
@@ -78,36 +79,8 @@ class DefMacro {
 			});
 		}
 
-		{
-			var thisTypeExpr = macro $p{thisTP.pack.concat([thisTP.name, thisTP.sub])};
-
-			newFields.push({
-				pos: pos,
-				name: "__fromRawValue",
-				access: [AStatic],
-				meta: [{name: ":pure", pos: pos}],
-				kind: FFun({
-					args: [{name: "raw", type: macro : classy.core.RawValue}],
-					ret: thisCT,
-					expr: macro {
-						var instance = std.Type.createEmptyInstance($thisTypeExpr);
-						$b{fromRawExprs};
-						return instance;
-					}
-				})
-			});
-
-			var rawValueConverterName = getRawValueConverterName(thisTP.sub);
-			var rawValueConverterTP = {pack: thisTP.pack, name: rawValueConverterName};
-			var rawValueConverterTD = macro class $rawValueConverterName implements classy.core.RawValueConverter<$thisCT> {
-				inline function new() {}
-				static var instance = new $rawValueConverterTP();
-				public static inline function get() return instance;
-				public inline function fromRawValue(raw) return @:privateAccess $thisTypeExpr.__fromRawValue(raw);
-			};
-			rawValueConverterTD.pack = thisTP.pack;
-			Context.defineType(rawValueConverterTD, thisModule);
-		}
+		newFields.push(rawValueConverterBuilder.createFromRawValueField());
+		Context.defineType(rawValueConverterBuilder.createClassDefinition(), thisModule);
 
 		return fields.concat(newFields);
 	}
