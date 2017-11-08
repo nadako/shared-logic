@@ -15,21 +15,11 @@ class ValueMacro {
 	static function build() {
 		var fields = Context.getBuildFields();
 		var newFields = new Array<Field>();
+
 		var setupExprs = new Array<Expr>();
-
-		var thisTP, thisModule, pos;
-		switch Context.getLocalType() {
-			case TInst(_.get() => cl, _):
-				if (cl.isPrivate) throw new Error("Value subclasses cannot be private", cl.pos);
-				thisTP = getTypePath(cl);
-				thisModule = cl.module;
-				pos = cl.pos;
-			case _:
-				throw new Error("ValueMacro.build() called on a non-class", Context.currentPos());
-		}
-
-		var rawValueConverterBuilder = new ValueRawValueConverterBuilder(thisTP, pos);
-		var toRawBuilder = new ValueToRawValueBuilder(pos);
+		var ctx = new ValueClassBuildContext();
+		var rawValueConverterBuilder = new ValueRawValueConverterBuilder(ctx.typePath, ctx.pos);
+		var toRawBuilder = new ValueToRawValueBuilder(ctx.pos);
 
 		for (field in fields) {
 			if (field.access.indexOf(AStatic) != -1)
@@ -96,7 +86,7 @@ class ValueMacro {
 
 		if (setupExprs.length > 0) {
 			newFields.push({
-				pos: pos,
+				pos: ctx.pos,
 				name: "__setup",
 				access: [AOverride],
 				kind: FFun({
@@ -118,7 +108,7 @@ class ValueMacro {
 			newFields.push(toRawBuilder.createToRawValueField());
 
 		newFields.push(rawValueConverterBuilder.createFromRawValueField());
-		Context.defineType(rawValueConverterBuilder.createClassDefinition(), thisModule);
+		Context.defineType(rawValueConverterBuilder.createClassDefinition(), ctx.module);
 
 		return fields.concat(newFields);
 	}
