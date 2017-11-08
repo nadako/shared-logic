@@ -30,6 +30,7 @@ class DefMacro {
 		}
 
 		var rawValueConverterBuilder = new ValueRawValueConverterBuilder(thisTP, pos);
+		var toRawBuilder = new ValueToRawValueBuilder(pos);
 
 		for (field in fields) {
 			if (field.access.indexOf(AStatic) != -1)
@@ -52,7 +53,7 @@ class DefMacro {
 					var helper = gen.getHelper(fieldType, fieldType, field.pos);
 
 					var toRawExpr = helper.toRaw(macro this.$fieldName, rawValueExpr -> macro raw.$fieldName = $rawValueExpr, () -> macro {});
-					toRawExprs.push(toRawExpr);
+					toRawBuilder.addToRawExpr(toRawExpr);
 
 					var fromRawExpr = helper.fromRaw(macro raw.$fieldName, field.pos);
 					rawValueConverterBuilder.addFromRawExpr(macro instance.$fieldName = $fromRawExpr);
@@ -61,23 +62,8 @@ class DefMacro {
 			}
 		}
 
-		if (toRawExprs.length > 0) {
-			newFields.push({
-				pos: pos,
-				name: "__toRawValue",
-				access: [AOverride],
-				meta: [{name: ":pure", pos: pos}],
-				kind: FFun({
-					args: [],
-					ret: null,
-					expr: macro {
-						var raw:classy.core.RawValue = {};
-						$b{toRawExprs}
-						return raw;
-					}
-				})
-			});
-		}
+		if (toRawBuilder.isNotEmpty())
+			newFields.push(toRawBuilder.createToRawValueField());
 
 		newFields.push(rawValueConverterBuilder.createFromRawValueField());
 		Context.defineType(rawValueConverterBuilder.createClassDefinition(), thisModule);
