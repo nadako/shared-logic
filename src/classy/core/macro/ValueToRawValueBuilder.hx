@@ -1,5 +1,6 @@
 package classy.core.macro;
 
+#if macro
 import haxe.macro.Expr;
 
 class ValueToRawValueBuilder {
@@ -34,3 +35,4 @@ class ValueToRawValueBuilder {
 		};
 	}
 }
+#end

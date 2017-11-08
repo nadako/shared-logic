@@ -150,19 +150,7 @@ class EnumHelperInfo implements HelperInfo {
 		}
 
 		{
-			var rawValueConverterName = getRawValueConverterName(enumType.name);
-			var rawValueConverterTP = {pack: enumType.pack, name: rawValueConverterName};
-			var rawValueConverterTD = macro class $rawValueConverterName implements classy.core.RawValueConverter<$enumCT> {
-				inline function new() {}
-				static var instance = new $rawValueConverterTP();
-				public static inline function get() return instance;
-
-				@:pure
-				public function fromRawValue(raw:classy.core.RawValue):$enumCT {
-					return $fromRawValueExpr;
-				}
-			}
-			rawValueConverterTD.pack = enumType.pack;
+			var rawValueConverterTD = Utils.createRawValueConverterClassDefinition(enumTP, macro return $fromRawValueExpr);
 			Context.defineType(rawValueConverterTD, enumType.module);
 		}
 

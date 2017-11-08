@@ -18,4 +18,18 @@ class Utils {
 			sub: t.name
 		};
 	}
+
+	public static function createRawValueConverterClassDefinition(dataTypePath:TypePath, fromRawExpr:Expr):TypeDefinition {
+		var dataCT = TPath(dataTypePath);
+		var rawValueConverterName = getRawValueConverterName(dataTypePath.sub);
+		var rawValueConverterTP = {pack: dataTypePath.pack, name: rawValueConverterName};
+		var rawValueConverterTD = macro class $rawValueConverterName implements classy.core.RawValueConverter<$dataCT> {
+			inline function new() {}
+			static var instance = new $rawValueConverterTP();
+			public static inline function get() return instance;
+			@:pure public inline function fromRawValue(raw:classy.core.RawValue):$dataCT $fromRawExpr;
+		};
+		rawValueConverterTD.pack = dataTypePath.pack;
+		return rawValueConverterTD;
+	}
 }

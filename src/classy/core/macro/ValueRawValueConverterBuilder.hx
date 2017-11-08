@@ -1,5 +1,6 @@
 package classy.core.macro;
 
+#if macro
 import haxe.macro.Expr;
 
 class ValueRawValueConverterBuilder {
@@ -39,15 +40,8 @@ class ValueRawValueConverterBuilder {
 	}
 
 	public function createClassDefinition():TypeDefinition {
-		var rawValueConverterName = Utils.getRawValueConverterName(thisTP.sub);
-		var rawValueConverterTP = {pack: thisTP.pack, name: rawValueConverterName};
-		var rawValueConverterTD = macro class $rawValueConverterName implements classy.core.RawValueConverter<$thisCT> {
-			inline function new() {}
-			static var instance = new $rawValueConverterTP();
-			public static inline function get() return instance;
-			public inline function fromRawValue(raw) return @:privateAccess $thisTypeExpr.__fromRawValue(raw);
-		};
-		rawValueConverterTD.pack = thisTP.pack;
-		return rawValueConverterTD;
+		var fromRawMethodExpr = macro return @:privateAccess $thisTypeExpr.__fromRawValue(raw);
+		return Utils.createRawValueConverterClassDefinition(thisTP, fromRawMethodExpr);
 	}
 }
+#end
