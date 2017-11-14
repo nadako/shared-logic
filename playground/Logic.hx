@@ -16,10 +16,8 @@ class Logic {
 		commands = new CommandExecutor(new Commands(context));
 	}
 
-	public function setup(rawData:RawValue, rawDefs:RawValue) {
-		var data = GameData.fromRawValue(rawData);
+	public function setup(data:GameData, defs:DefData) {
 		data.setup(transaction, dbChanges);
-		var defs = DefData.fromRawValue(rawDefs);
 		context.setup(data, defs);
 	}
 
@@ -39,5 +37,15 @@ class Logic {
 		transaction.commit();
 		var changes = dbChanges.commit();
 		return changes;
+	}
+
+	@:expose("convertData")
+	static function convertData(raw:RawValue):GameData {
+		return GameData.fromRawValue(raw);
+	}
+
+	@:expose("convertDefs")
+	static function convertDefs(raw:RawValue):DefData {
+		return DefData.fromRawValue(raw);
 	}
 }

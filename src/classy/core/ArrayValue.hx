@@ -104,7 +104,7 @@ class ArrayValueImpl<T> extends ValueBase {
 	}
 }
 
-private class ArrayIterator<T> {
+class ArrayIterator<T> {
 	final array:Array<T>;
 	final length:Int;
 	var index:Int;

@@ -67,7 +67,7 @@ class HelperGenerator {
 	function isValueClass(cl:ClassType):Bool {
 		return switch cl {
 			case {pack: ["classy", "core"], name: "ValueBase"} if (!defMode): true;
-			case {pack: ["classy", "core"], name: "Def"} if (defMode): true;
+			case {pack: ["classy", "core"], name: "DefBase"} if (defMode): true;
 			case _ if (cl.superClass != null): isValueClass(cl.superClass.t.get());
 			case _: false;
 		}

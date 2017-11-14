@@ -1,13 +1,13 @@
 import classy.core.Value;
-import classy.core.ArrayValue;
-import classy.core.StringMapValue;
 import classy.core.IntMapValue;
 
+import DefData.HeroType;
+
 class GameData extends Value {
-	public var counter:Int;
-	public var player:Player;
-	public var heroes:StringMapValue<HeroId,Int>;
-	public var map:IntMapValue<MapId,MapItem>;
+	public var exp:Int;
+	public var gold:Int;
+	public var premium:Bool;
+	public var heroes:HeroesData;
 
 	public static inline function fromRawValue(raw)
 		return __fromRawValue(raw);
@@ -16,31 +16,25 @@ class GameData extends Value {
 		return __setup(transaction, changes);
 }
 
-enum Gender {
-	Male;
-	Female;
-	Fluid;
+abstract HeroId(Int) to Int {
+	public inline function new(id) this = id;
 }
 
-abstract HeroId(String) to String {}
-abstract ChestId(String) {}
+class HeroesData extends Value {
+	public var data:IntMapValue<HeroId,Hero>;
+	var nextId:Int;
 
-abstract MapId(Int) to Int {}
-
-class MapItem extends Value {
-	public var name:String;
-	public var x:Int;
-	public var y:Int;
+	public inline function makeHeroId():HeroId {
+		return new HeroId(nextId++);
+	}
 }
 
-enum InventoryItem {
-	LotteryTicket;
-	HeroParts(heroId:HeroId, amount:Int);
-	Chest(chestId:ChestId);
-}
+class Hero extends Value {
+	public var type:HeroType;
+	public var level:Int;
 
-class Player extends Value {
-	public var name:String;
-	public var gender:Gender;
-	public var inventory:ArrayValue<InventoryItem>;
+	public function new(type, level) {
+		this.type = type;
+		this.level = level;
+	}
 }

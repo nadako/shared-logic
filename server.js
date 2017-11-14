@@ -1,36 +1,46 @@
 var logicModule = require("./bin/logic.js");
-var logic = new logicModule.Logic();
 
 var data = {
-	counter: 0,
-	heroes: {
-
-	},
-	map: {
-		"1": {
-			name: "hq",
-			x: 10,
-			y: 15,
+	"exp": 0,
+	"gold": 100,
+	"premium": false,
+	"heroes": {
+		"nextId": 3,
+		"data": {
+			"1": {
+				"type": "rambo",
+				"level": 0
+			},
+			"2": {
+				"type": "pony",
+				"level": 3
+			}
 		}
-	},
-	player: {
-		name: "Some guy",
-		gender: "Male",
-		inventory: [
-			"LotteryTicket",
-			{"$tag": "HeroParts", "heroId": "antonia", "amount": 3},
-			{"$tag": "Chest", "chestId": "woodenChest"},
-		]
 	}
 }
 
 var defs = {
-	increaseValue: 100,
-	limits: {
-		counterLimit: 150
-	}
+	"clickExp": 10,
+	"clickRewards": [
+		{
+			"exp": 10,
+			"reward": "PremiumStatus"
+		},
+		{
+			"exp": 20,
+			"reward": {"$tag": "Gold", "amount": 1000}
+		},
+		{
+			"exp": 30,
+			"reward": {"$tag": "Hero", "type": "rambo", "level": 3}
+		}
+	]
 }
 
+var data = logicModule.convertData(data);
+var defs = logicModule.convertDefs(defs);
+
+var logic = new logicModule.Logic();
 logic.setup(data, defs);
 
 function exec(time, name, args) {
@@ -40,11 +50,6 @@ function exec(time, name, args) {
 	}
 }
 
-exec(100600, "increaseCounter", []);
-exec(100600, "increaseCounter", []);
-exec(100500, "player.changeName", ["Other guy"]);
-exec(100700, "player.checkInventory", []);
-exec(100800, "player.addHero", ["arnie"]);
-exec(100800, "player.addHero", ["arnie"]);
-exec(100800, "player.removeHeroes", ["arnie"]);
-exec(100800, "checkMap", []);
+exec(0, "click", []);
+exec(10, "click", []);
+exec(20, "click", []);
